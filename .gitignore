@@ -31,3 +31,7 @@ pgdata/
 .idea/
 .DS_Store
 *.log
+
+# corpus — real filings, re-fetchable, never committed to git
+data/corpus/*
+!data/corpus/.gitkeep
