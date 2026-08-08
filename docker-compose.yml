@@ -24,14 +24,15 @@ services:
 
   engine:
     build: ./engine
+    volumes:
+      - ./engine/app:/code/app
+      - ./data/corpus:/code/data/corpus:ro
     container_name: attest_engine
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./engine/app:/code/app
 
   shell:
     build: ./shell
