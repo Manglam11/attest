@@ -25,32 +25,34 @@ DENSE_NAME = "dense"
 SPARSE_NAME = "sparse"
 
 
-def extract_text(pdf_path: str) -> str:
+def extract_pages(pdf_path: str) -> list[tuple[int, str]]:
     doc = fitz.open(pdf_path)
-    pages = []
-    for page in doc:
-        pages.append(page.get_text())
+    pages = [(i + 1, page.get_text()) for i, page in enumerate(doc)]
     doc.close()
-    return "\n".join(pages)
+    return pages
 
 
-def chunk_text(text: str) -> list[str]:
+def chunk_pages(pages: list[tuple[int, str]]) -> list[dict]:
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
     )
-    return splitter.split_text(text)
+    records = []
+    for page_num, page_text in pages:
+        for chunk in splitter.split_text(page_text):
+            records.append({"text": chunk, "page": page_num})
+    return records
 
 
-def embed_chunks(chunks: list[str]) -> list[list[float]]:
+def embed_chunks(texts: list[str]) -> list[list[float]]:
     model = SentenceTransformer(EMBED_MODEL)
-    vectors = model.encode(chunks, show_progress_bar=True)
+    vectors = model.encode(texts, show_progress_bar=True)
     return vectors.tolist()
 
 
-def embed_chunks_sparse(chunks: list[str]) -> list[SparseVector]:
+def embed_chunks_sparse(texts: list[str]) -> list[SparseVector]:
     model = SparseTextEmbedding(SPARSE_MODEL)
-    embeddings = model.embed(chunks)
+    embeddings = model.embed(texts)
     return [
         SparseVector(indices=e.indices.tolist(), values=e.values.tolist())
         for e in embeddings
@@ -58,7 +60,7 @@ def embed_chunks_sparse(chunks: list[str]) -> list[SparseVector]:
 
 
 def store_vectors(
-    chunks: list[str],
+    records: list[dict],
     dense_vectors: list[list[float]],
     sparse_vectors: list[SparseVector],
 ) -> None:
@@ -78,16 +80,18 @@ def store_vectors(
         PointStruct(
             id=i,
             vector={DENSE_NAME: dense_vectors[i], SPARSE_NAME: sparse_vectors[i]},
-            payload={"text": chunks[i]},
+            payload={"text": records[i]["text"], "page": records[i]["page"]},
         )
-        for i in range(len(chunks))
+        for i in range(len(records))
     ]
     client.upsert(collection_name=COLLECTION, points=points)
 
 
 if __name__ == "__main__":
-    full_text = extract_text(PDF_PATH)
-    chunks = chunk_text(full_text)
-    dense_vectors = embed_chunks(chunks)
-    sparse_vectors = embed_chunks_sparse(chunks)
-    store_vectors(chunks, dense_vectors, sparse_vectors)
+    pages = extract_pages(PDF_PATH)
+    records = chunk_pages(pages)
+    texts = [r["text"] for r in records]
+    dense_vectors = embed_chunks(texts)
+    sparse_vectors = embed_chunks_sparse(texts)
+    store_vectors(records, dense_vectors, sparse_vectors)
+    print(f"Ingested {len(records)} chunks with page provenance.")
