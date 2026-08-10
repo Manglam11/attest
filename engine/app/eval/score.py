@@ -4,7 +4,7 @@ from app.eval.gold_set import GOLD_SET
 
 def score_one(question: str, answer_key: str, top_k: int = 5) -> dict:
     chunks = retrieve(question, top_k)
-    relevant = sum(1 for chunk in chunks if answer_key in chunk)
+    relevant = sum(1 for chunk in chunks if answer_key in chunk["text"])
     return {
         "hit": relevant > 0,
         "precision": relevant / len(chunks) if chunks else 0.0,
@@ -25,7 +25,7 @@ def run() -> None:
     hit_rate = sum(1 for r in results if r["hit"]) / n
     precision = sum(r["precision"] for r in results) / n
 
-    print("\n--- baseline: vector-only, top-5 ---")
+    print("\n--- hybrid + reranker, top-5 ---")
     print(f"hit rate:  {hit_rate:.2f}  ({sum(1 for r in results if r['hit'])}/{n} questions)")
     print(f"precision: {precision:.2f}  (§02 target >= 0.85)")
 
