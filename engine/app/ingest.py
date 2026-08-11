@@ -1,4 +1,7 @@
+import os
 import fitz
+from google import genai
+from google.genai import types
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 from fastembed import SparseTextEmbedding
@@ -23,6 +26,8 @@ COLLECTION = "attest_chunks"
 VECTOR_SIZE = 384
 DENSE_NAME = "dense"
 SPARSE_NAME = "sparse"
+FIGURE_MIN_PX = 200
+VISION_MODEL = "gemini-3.6-flash"
 
 
 def extract_pages(pdf_path: str) -> list[tuple[int, str]]:
@@ -40,7 +45,40 @@ def chunk_pages(pages: list[tuple[int, str]]) -> list[dict]:
     records = []
     for page_num, page_text in pages:
         for chunk in splitter.split_text(page_text):
-            records.append({"text": chunk, "page": page_num})
+            records.append({"text": chunk, "page": page_num, "kind": "text"})
+    return records
+
+
+def extract_and_describe_figures(pdf_path: str) -> list[dict]:
+    doc = fitz.open(pdf_path)
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    prompt = (
+        "Describe this figure from a financial 10-K filing in detail. "
+        "Include the chart type, what it measures, the axes, every "
+        "company/index plotted, and any specific values or endpoints "
+        "you can read. Be precise and factual."
+    )
+    records = []
+    for i, page in enumerate(doc):
+        page_num = i + 1
+        for img in page.get_images(full=True):
+            xref = img[0]
+            pix = fitz.Pixmap(doc, xref)
+            if pix.width < FIGURE_MIN_PX or pix.height < FIGURE_MIN_PX:
+                continue
+            if pix.n > 4:
+                pix = fitz.Pixmap(fitz.csRGB, pix)
+            png_bytes = pix.tobytes("png")
+            resp = client.models.generate_content(
+                model=VISION_MODEL,
+                contents=[
+                    types.Part.from_bytes(data=png_bytes, mime_type="image/png"),
+                    prompt,
+                ],
+            )
+            description = f"Figure on page {page_num}: {resp.text}"
+            records.append({"text": description, "page": page_num, "kind": "figure"})
+    doc.close()
     return records
 
 
@@ -80,7 +118,7 @@ def store_vectors(
         PointStruct(
             id=i,
             vector={DENSE_NAME: dense_vectors[i], SPARSE_NAME: sparse_vectors[i]},
-            payload={"text": records[i]["text"], "page": records[i]["page"]},
+            payload={"text": records[i]["text"], "page": records[i]["page"], "kind": records[i]["kind"]},
         )
         for i in range(len(records))
     ]
@@ -90,8 +128,9 @@ def store_vectors(
 if __name__ == "__main__":
     pages = extract_pages(PDF_PATH)
     records = chunk_pages(pages)
+    records += extract_and_describe_figures(PDF_PATH)
     texts = [r["text"] for r in records]
     dense_vectors = embed_chunks(texts)
     sparse_vectors = embed_chunks_sparse(texts)
     store_vectors(records, dense_vectors, sparse_vectors)
-    print(f"Ingested {len(records)} chunks with page provenance.")
+    print(f"Ingested {len(records)} records ({sum(r['kind']=='figure' for r in records)} figures).")
