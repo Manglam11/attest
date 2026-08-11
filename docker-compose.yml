@@ -27,6 +27,7 @@ services:
     volumes:
       - ./engine/app:/code/app
       - ./data/corpus:/code/data/corpus:ro
+      - ./data/figures:/code/data/figures
     container_name: attest_engine
     ports:
       - "8000:8000"
