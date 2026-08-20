@@ -29,6 +29,29 @@ agent = create_agent(
 )
 
 
-def run_agent(question: str):
+def _flatten_content(content) -> str:
+    if isinstance(content, str):
+        return content
+    parts = []
+    for block in content:
+        if isinstance(block, dict) and block.get("type") == "text":
+            parts.append(block["text"])
+        elif isinstance(block, str):
+            parts.append(block)
+    return "".join(parts)
+
+
+def run_agent(question: str) -> dict:
     result = agent.invoke({"messages": [{"role": "user", "content": question}]})
-    return result
+    messages = result["messages"]
+
+    tool_calls = []
+    for message in messages:
+        for call in getattr(message, "tool_calls", []) or []:
+            tool_calls.append(
+                {"tool": call["name"], "query": call["args"].get("question", "")}
+            )
+
+    answer = _flatten_content(messages[-1].content)
+
+    return {"answer": answer, "tool_calls": tool_calls}
