@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from app.retrieve import retrieve
-from app.generate import generate_answer
+from app.agent import run_agent
 
 app = FastAPI(title="Attest Engine")
 
@@ -18,10 +17,9 @@ def health():
 
 @app.post("/ask")
 def ask(request: AskRequest):
-    chunks = retrieve(request.question)
-    answer = generate_answer(request.question, chunks)
+    result = run_agent(request.question)
     return {
         "question": request.question,
-        "answer": answer,
-        "sources": chunks,
+        "answer": result["answer"],
+        "tool_calls": result["tool_calls"],
     }
