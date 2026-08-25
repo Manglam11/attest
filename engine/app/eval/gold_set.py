@@ -5,4 +5,13 @@ GOLD_SET = [
     {"question": "How much did Apple spend on research and development in fiscal 2025?", "answer_key": "34,550"},
     {"question": "What was Apple's diluted earnings per share in fiscal 2025?", "answer_key": "7.46"},
     {"question": "How many diluted shares did Apple use to compute earnings per share in fiscal 2025?", "answer_key": "15,004,697"},
+    {"question": "What were Apple's total assets as of the end of fiscal 2025?", "answer_key": "364,980"},
+    {"question": "What was Apple's operating income for fiscal 2025?", "answer_key": "123,216"},
+    {"question": "What was the total of Apple's cash, cash equivalents, and marketable securities at the end of fiscal 2025?", "answer_key": "132.4"},
+    {"question": "In the five-year stock performance graph, what was the ending value of a $100 investment in Apple common stock as of September 2025?", "answer_key": "208"},
+    {"question": "What base amount was assumed invested in the stock performance comparison graph as of September 2020?", "answer_key": "100"},
+    {"question": "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?", "answer_key": "416,161"},
+    {"question": "By what date must Apple settle its State Aid Decision obligation using restricted cash held in escrow?", "answer_key": "UNANSWERABLE"},
+    {"question": "What does Apple forecast its total net sales will be for fiscal 2026?", "answer_key": "UNANSWERABLE"},
+    {"question": "Will Apple's share price exceed $300 by the end of 2026?", "answer_key": "UNANSWERABLE"},
 ]
