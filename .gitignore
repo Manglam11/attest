@@ -35,3 +35,6 @@ pgdata/
 # corpus — real filings, re-fetchable, never committed to git
 data/corpus/*
 !data/corpus/.gitkeepaapl_extracted.txt
+
+!data/eval/
+!data/eval/*.json
