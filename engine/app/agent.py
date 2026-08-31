@@ -1,6 +1,8 @@
 import os
+import re
 
 from langchain.agents import create_agent
+from langchain_core.messages import ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.tools import retrieve_document_chunks
@@ -16,6 +18,8 @@ SYSTEM_PROMPT = (
     "If the document does not contain the answer, say: "
     "'I cannot answer this from the provided sources.'"
 )
+
+CHUNK_BOUNDARY = re.compile(r"\n\n(?=\[page )")
 
 model = ChatGoogleGenerativeAI(
     model=MODEL,
@@ -41,6 +45,18 @@ def _flatten_content(content) -> str:
     return "".join(parts)
 
 
+def _collect_contexts(messages) -> list[str]:
+    contexts = []
+    for message in messages:
+        if not isinstance(message, ToolMessage):
+            continue
+        for chunk in CHUNK_BOUNDARY.split(_flatten_content(message.content)):
+            chunk = chunk.strip()
+            if chunk and chunk not in contexts:
+                contexts.append(chunk)
+    return contexts
+
+
 def run_agent(question: str) -> dict:
     result = agent.invoke({"messages": [{"role": "user", "content": question}]})
     messages = result["messages"]
@@ -52,6 +68,8 @@ def run_agent(question: str) -> dict:
                 {"tool": call["name"], "query": call["args"].get("question", "")}
             )
 
-    answer = _flatten_content(messages[-1].content)
-
-    return {"answer": answer, "tool_calls": tool_calls}
+    return {
+        "answer": _flatten_content(messages[-1].content),
+        "tool_calls": tool_calls,
+        "contexts": _collect_contexts(messages),
+    }

@@ -22,4 +22,5 @@ def ask(request: AskRequest):
         "question": request.question,
         "answer": result["answer"],
         "tool_calls": result["tool_calls"],
+        "contexts": result["contexts"],
     }
