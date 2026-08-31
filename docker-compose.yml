@@ -34,7 +34,8 @@ services:
       - "8000:8000"
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - HF_HOME=/root/.cache/huggingface
+      - JUDGE_API_KEY=${JUDGE_API_KEY}
+      - ENGINE_URL=http://engine:8000
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,6 +50,21 @@ services:
         condition: service_healthy
     volumes:
       - ./shell:/code
+
+  eval:
+    build:
+      context: ./engine
+      dockerfile: Dockerfile.eval
+    container_name: attest_eval
+    profiles: ["eval"]
+    volumes:
+      - ./engine/app:/code/app
+      - ./data/eval:/code/data/eval
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ENGINE_URL=http://engine:8000
+    depends_on:
+      - engine
 
 volumes:
   postgres_data:
