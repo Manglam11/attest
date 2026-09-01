@@ -105,7 +105,7 @@
     },
     {
       "question": "What were Apple's total assets as of the end of fiscal 2025?",
-      "answer_key": "364,980",
+      "answer_key": "359,241",
       "answer": "As of the end of fiscal 2025 (September 27, 2025), Apple's **total assets** were **$359,241 million** (or approximately **$359.24 billion**).\n\n### Breakdown of Assets (in millions):\n* **Total current assets:** $147,957\n  * Cash and cash equivalents: $35,934\n  * Marketable securities: $18,763\n  * Accounts receivable, net: $39,777\n  * Vendor non-trade receivables: $33,180\n  * Inventories: $5,718\n  * Other current assets: $14,585\n* **Total non-current assets:** $211,284\n  * Marketable securities: $77,723\n  * Property, plant and equipment, net: $49,834\n  * Other non-current assets: $83,727\n* **Total assets:** **$359,241**\n\n*(Source: Page 35, Consolidated Balance Sheets)*",
       "refused": false,
       "scores": {
@@ -118,7 +118,7 @@
     },
     {
       "question": "What was Apple's operating income for fiscal 2025?",
-      "answer_key": "123,216",
+      "answer_key": "133,050",
       "answer": "According to Apple's Consolidated Statements of Operations (page 33), Apple's operating income for fiscal 2025 (year ended September 27, 2025) was **$133,050 million** (or **$133.05 billion**).",
       "refused": false,
       "scores": {
@@ -144,7 +144,7 @@
     },
     {
       "question": "In the five-year stock performance graph, what was the ending value of a $100 investment in Apple common stock as of September 2025?",
-      "answer_key": "208",
+      "answer_key": "234",
       "answer": "According to the five-year stock performance graph (page 24), the ending value of a $100 investment in Apple common stock as of September 2025 was **$234**. \n\n### Performance History of a $100 Investment in Apple Common Stock:\n* **September 2020:** $100\n* **September 2021:** $132\n* **September 2022:** $136\n* **September 2023:** $155\n* **September 2024:** $208\n* **September 2025:** **$234**",
       "refused": false,
       "scores": {
@@ -170,7 +170,7 @@
     },
     {
       "question": "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?",
-      "answer_key": "416,161",
+      "answer_key": "381,611",
       "answer": "According to Apple Inc.'s Consolidated Statements of Operations (pages 28 and 33), for fiscal year 2025:\n\n* **Total Net Sales:** $416,161 million (or ~$416.161 billion)\n* **Research and Development (R&D) Spend:** $34,550 million (or ~$34.55 billion)\n\n### Comparison:\n* **Dollar Difference:** Apple's total net sales was **$381,611 million** (or **$381.611 billion**) larger than its R&D spend.\n* **Ratio / Multiple:** Total net sales was approximately **12.05 times** (or ~1,204.5%) the size of its R&D spend.\n* **Percentage:** R&D spend represented approximately **8.3%** (reported as 8%) of total net sales.",
       "refused": false,
       "scores": {
