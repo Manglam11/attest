@@ -64,6 +64,26 @@ def summarise(rows: list) -> dict:
             "target": target,
             "n": len(vals),
         }
+
+    # answer_relevancy is the only metric whose value depends on which embedder
+    # scored it. A mean across rows scored by different embedders — or any row
+    # scored without its embedder recorded at all — is not a single ruler, so
+    # refuse it rather than print a number that looks like one.
+    ar_rows = [r for r in rows if r.get("scores")]
+    embed_models = {r.get("embed_model") for r in ar_rows}
+    if ar_rows and (len(embed_models) > 1 or None in embed_models):
+        counts = {}
+        for r in ar_rows:
+            m = r.get("embed_model")
+            counts[m] = counts.get(m, 0) + 1
+        summary["answer_relevancy"] = {
+            "mean": None,
+            "target": TARGETS["answer_relevancy"],
+            "n": len(ar_rows),
+            "unclaimable": True,
+            "reason": f"mixed/unrecorded embed_model across scored rows: {counts}",
+        }
+
     unanswerable = [r for r in rows if r["answer_key"] == "UNANSWERABLE"]
     refused = [r for r in unanswerable if r["refused"]]
     summary["refusal_rate"] = {
@@ -239,6 +259,9 @@ async def main(limit):
     print("\n— summary —")
     for metric, target in TARGETS.items():
         s = summary[metric]
+        if s.get("unclaimable"):
+            print(f"{metric:<20} UNCLAIMABLE — {s['reason']}")
+            continue
         if s["mean"] is None:
             print(f"{metric:<20} no rows scored")
             continue
