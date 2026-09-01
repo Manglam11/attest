@@ -93,3 +93,11 @@ verbatim refusal sentence is a programmatic seam.
 `docs/blueprint.pdf` is what we build. `docs/sessions/` holds thirteen session logs —
 read the newest first; each one supersedes older claims. `JOURNAL.md` is the
 per-turn record of real problems and concrete fixes.
+- **Resume paths re-validate cached fields; they do not replay them.** Three
+  instances in this build: the judge write-merge (a partial run dropped rows
+  scored earlier), the judge embed provenance (a cached score outlived the
+  embedder that produced it), and the harness gold keys (a cached run record
+  outlived a gold-set correction). Every resume-from-disk feature must state
+  explicitly which fields are safe to reuse verbatim and which must be
+  re-derived from current source of truth on every read. Reuse by default is
+  the bug, not the exception.
