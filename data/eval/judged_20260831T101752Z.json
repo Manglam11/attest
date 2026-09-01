@@ -2,7 +2,7 @@
   "run": "run_20260831T101752Z.json",
   "judge_model": "gemini-3.5-flash-lite",
   "embed_model": "gemini-embedding-001",
-  "judged_at": "2026-09-01T06:27:42.200132+00:00",
+  "judged_at": "2026-09-01T09:15:01.353606+00:00",
   "summary": {
     "faithfulness": {
       "mean": 1.0,
@@ -20,8 +20,8 @@
       "n": 4
     },
     "refusal_rate": {
-      "value": null,
-      "n": 0
+      "value": 1.0,
+      "n": 3
     }
   },
   "rows": [
@@ -72,6 +72,94 @@
         "context_precision": 0.5833333333041666
       },
       "error": null
+    },
+    {
+      "question": "What was Apple's diluted earnings per share in fiscal 2025?",
+      "answer_key": "7.46",
+      "answer": "In fiscal 2025, Apple's diluted earnings per share was **$7.46** (compared to $6.08 in fiscal 2024 and $6.13 in fiscal 2023) [Pages 33, 40].",
+      "refused": false,
+      "scores": null,
+      "error": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Quota exceeded for aiplatform.googleapis.com/global_embed_content_requests_per_minute_per_base_model with base model: gemini-embedding. Please submit a quota increase request. https://cloud.google.com/vertex-ai/docs/generative-ai/quotas-genai.', 'status': 'RESOURCE_EXHAUSTED'}}"
+    },
+    {
+      "question": "How many diluted shares did Apple use to compute earnings per share in fiscal 2025?",
+      "answer_key": "15,004,697",
+      "answer": "In fiscal 2025, Apple used **15,004,697,000** diluted shares (or **15,004,697 thousand** weighted-average diluted shares) to compute diluted earnings per share (pages 33, 40). \n\n### Breakdown of the Computation (in thousands):\n* **Weighted-average basic shares outstanding:** 14,948,500\n* **Effect of dilutive share-based awards:** 56,197\n* **Weighted-average diluted shares:** 15,004,697",
+      "refused": false,
+      "scores": null,
+      "error": "not attempted"
+    },
+    {
+      "question": "What were Apple's total assets as of the end of fiscal 2025?",
+      "answer_key": "364,980",
+      "answer": "As of the end of fiscal 2025 (September 27, 2025), Apple's **total assets** were **$359,241 million** (or approximately **$359.24 billion**).\n\n### Breakdown of Assets (in millions):\n* **Total current assets:** $147,957\n  * Cash and cash equivalents: $35,934\n  * Marketable securities: $18,763\n  * Accounts receivable, net: $39,777\n  * Vendor non-trade receivables: $33,180\n  * Inventories: $5,718\n  * Other current assets: $14,585\n* **Total non-current assets:** $211,284\n  * Marketable securities: $77,723\n  * Property, plant and equipment, net: $49,834\n  * Other non-current assets: $83,727\n* **Total assets:** **$359,241**\n\n*(Source: Page 35, Consolidated Balance Sheets)*",
+      "refused": false,
+      "scores": null,
+      "error": "not attempted"
+    },
+    {
+      "question": "What was Apple's operating income for fiscal 2025?",
+      "answer_key": "123,216",
+      "answer": "According to Apple's Consolidated Statements of Operations (page 33), Apple's operating income for fiscal 2025 (year ended September 27, 2025) was **$133,050 million** (or **$133.05 billion**).",
+      "refused": false,
+      "scores": null,
+      "error": "not attempted"
+    },
+    {
+      "question": "What was the total of Apple's cash, cash equivalents, and marketable securities at the end of fiscal 2025?",
+      "answer_key": "132.4",
+      "answer": "At the end of fiscal 2025 (September 27, 2025), the total of Apple's cash, cash equivalents, and marketable securities was **$132,420 million** (or approximately **$132.42 billion**) [pages 29, 35, 41].\n\n### Breakdown (in millions) [pages 35, 41]:\n* **Cash and cash equivalents:** $35,934\n* **Current marketable securities:** $18,763\n* **Non-current marketable securities:** $77,723\n* **Total:** **$132,420**",
+      "refused": false,
+      "scores": null,
+      "error": "not attempted"
+    },
+    {
+      "question": "In the five-year stock performance graph, what was the ending value of a $100 investment in Apple common stock as of September 2025?",
+      "answer_key": "208",
+      "answer": "According to the five-year stock performance graph (page 24), the ending value of a $100 investment in Apple common stock as of September 2025 was **$234**. \n\n### Performance History of a $100 Investment in Apple Common Stock:\n* **September 2020:** $100\n* **September 2021:** $132\n* **September 2022:** $136\n* **September 2023:** $155\n* **September 2024:** $208\n* **September 2025:** **$234**",
+      "refused": false,
+      "scores": null,
+      "error": "not attempted"
+    },
+    {
+      "question": "What base amount was assumed invested in the stock performance comparison graph as of September 2020?",
+      "answer_key": "100",
+      "answer": "Based on the Company Stock Performance section of the document, the assumed base amount invested as of the market close on September 25, 2020, was **$100** (page 24).",
+      "refused": false,
+      "scores": null,
+      "error": "not attempted"
+    },
+    {
+      "question": "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?",
+      "answer_key": "416,161",
+      "answer": "According to Apple Inc.'s Consolidated Statements of Operations (pages 28 and 33), for fiscal year 2025:\n\n* **Total Net Sales:** $416,161 million (or ~$416.161 billion)\n* **Research and Development (R&D) Spend:** $34,550 million (or ~$34.55 billion)\n\n### Comparison:\n* **Dollar Difference:** Apple's total net sales was **$381,611 million** (or **$381.611 billion**) larger than its R&D spend.\n* **Ratio / Multiple:** Total net sales was approximately **12.05 times** (or ~1,204.5%) the size of its R&D spend.\n* **Percentage:** R&D spend represented approximately **8.3%** (reported as 8%) of total net sales.",
+      "refused": false,
+      "scores": null,
+      "error": "not attempted"
+    },
+    {
+      "question": "By what date must Apple settle its State Aid Decision obligation using restricted cash held in escrow?",
+      "answer_key": "UNANSWERABLE",
+      "answer": "The provided document does not state a specific date by which Apple must settle its State Aid Decision obligation using the restricted cash and marketable securities held in escrow. \n\nAccording to the document:\n* As of September 28, 2024, $2.6 billion of cash and cash equivalents and $13.2 billion of current marketable securities were held in escrow and restricted from general use, designated to settle Apple's obligation related to the State Aid Decision (Page 41).\n* Following the European Court of Justice's decision on September 10, 2024, confirming the 2016 State Aid Decision, Apple recorded a one-time income tax charge during the fourth quarter of 2024 representing $15.8 billion payable to Ireland via release of amounts held in escrow (Page 45).\n\nBecause the filing does not specify a deadline date for settling the obligation, I cannot answer this from the provided sources.",
+      "refused": true,
+      "scores": null,
+      "error": "not attempted"
+    },
+    {
+      "question": "What does Apple forecast its total net sales will be for fiscal 2026?",
+      "answer_key": "UNANSWERABLE",
+      "answer": "I cannot answer this from the provided sources. The filing does not include a forecast or projection for Apple's total net sales for fiscal 2026.",
+      "refused": true,
+      "scores": null,
+      "error": "not attempted"
+    },
+    {
+      "question": "Will Apple's share price exceed $300 by the end of 2026?",
+      "answer_key": "UNANSWERABLE",
+      "answer": "I cannot answer this from the provided sources.",
+      "refused": true,
+      "scores": null,
+      "error": "not attempted"
     }
   ]
 }

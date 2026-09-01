@@ -47,16 +47,12 @@ def score_value(result) -> float:
     return float(getattr(result, "value", result))
 
 
-def prior_scores() -> dict:
+def prior_records() -> dict:
     judged = sorted(EVAL_DIR.glob("judged_*.json"))
     if not judged:
         return {}
     prior = json.load(open(judged[-1]))
-    return {
-        r["question"]: r["scores"]
-        for r in prior.get("rows", [])
-        if r.get("scores")
-    }
+    return {r["question"]: r for r in prior.get("rows", [])}
 
 
 def summarise(rows: list) -> dict:
@@ -133,18 +129,24 @@ async def main(limit):
     print(f"judging {run_path.name}  ({len(rows)} rows, model={JUDGE_MODEL})")
     print(f"writing {out_path.name} after every row\n")
 
-    judged = []
+    prior = prior_records()
+    judged_by_q = dict(prior)
+    done = {q: r["scores"] for q, r in prior.items() if r.get("scores")}
     spent = 0
-    done = prior_scores()
-    if done:
-        print(f"resuming — {len(done)} rows already scored\n")
+    if prior:
+        print(f"resuming — {len(prior)} rows on disk, {len(done)} already scored\n")
+
+    def flush():
+        ordered = [judged_by_q[r["question"]] for r in rows if r["question"] in judged_by_q]
+        write_judged(out_path, run_path.name, ordered)
 
     for i, row in enumerate(rows):
         if limit is not None and spent >= limit:
             break
 
+        q = row["question"]
         record = {
-            "question": row["question"],
+            "question": q,
             "answer_key": row["answer_key"],
             "answer": row["answer"],
             "refused": REFUSAL.lower() in (row["answer"] or "").lower(),
@@ -155,17 +157,17 @@ async def main(limit):
         if row["answer_key"] == "UNANSWERABLE":
             print(f"[{i}] {'REFUSED' if record['refused'] else 'NO REFUSAL':<10} | "
                   f"unanswerable — LLM metrics skipped")
-            judged.append(record)
-            write_judged(out_path, run_path.name, judged)
+            judged_by_q[q] = record
+            flush()
             continue
 
-        if row["question"] in done:
-            record["scores"] = done[row["question"]]
+        if q in done:
+            record["scores"] = done[q]
             s = record["scores"]
             print(f"[{i}] f={s['faithfulness']:.2f} ar={s['answer_relevancy']:.2f} "
                   f"cp={s['context_precision']:.2f}  (cached)")
-            judged.append(record)
-            write_judged(out_path, run_path.name, judged)
+            judged_by_q[q] = record
+            flush()
             continue
 
         t0 = time.time()
@@ -180,29 +182,32 @@ async def main(limit):
             spent += 1
             record["error"] = f"{type(e).__name__}: {e}"
             print(f"[{i}] ERROR {record['error']}")
-            judged.append(record)
-            write_judged(out_path, run_path.name, judged)
+            judged_by_q[q] = record
+            flush()
             if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
-                judged.extend(
-                    {
-                        "question": r["question"],
+                for r in rows[i + 1:]:
+                    rq = r["question"]
+                    if rq in judged_by_q:
+                        # already known from a prior run — do not clobber with a placeholder
+                        continue
+                    judged_by_q[rq] = {
+                        "question": rq,
                         "answer_key": r["answer_key"],
                         "answer": r["answer"],
                         "refused": REFUSAL.lower() in (r["answer"] or "").lower(),
                         "scores": None,
                         "error": "not attempted",
                     }
-                    for r in rows[i + 1:]
-                )
-                write_judged(out_path, run_path.name, judged)
+                flush()
                 print("\n!! rate limit — stopping. Scored rows are on disk; re-run to resume.")
                 break
             continue
 
-        judged.append(record)
-        write_judged(out_path, run_path.name, judged)
+        judged_by_q[q] = record
+        flush()
 
-    summary = summarise(judged)
+    final_rows = [judged_by_q[r["question"]] for r in rows if r["question"] in judged_by_q]
+    summary = summarise(final_rows)
     print("\n— summary —")
     for metric, target in TARGETS.items():
         s = summary[metric]
