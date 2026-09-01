@@ -23,6 +23,7 @@ media/
 *.pdf
 uploads/
 aapl_extracted.txt
+!docs/blueprint.pdf
 
 # ---- Eval evidence: judged results ARE committed, raw runs are not ----
 !data/eval/
