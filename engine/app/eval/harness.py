@@ -50,7 +50,7 @@ def collect():
                 # but answer_key is a display field, not a scored one, so it
                 # always tracks GOLD_SET rather than whatever an older run
                 # captured before a gold-key fix.
-                records.append({**answered[question], "answer_key": item["answer_key"]})
+                records.append({**answered[question], "answer_key": item["answer_key"], "latency_s": None})
                 print(f"[{index:2}/{len(GOLD_SET)}]   reused  {question[:58]}")
                 continue
 
