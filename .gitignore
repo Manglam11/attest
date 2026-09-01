@@ -16,10 +16,23 @@ venv/
 env/
 
 # ---- Data & corpus (bulky, re-scrapeable) ----
-data/
+# NOTE: 'data/*' not 'data/' — a trailing slash stops git descending into the
+# folder at all, which kills every '!' exception below it.
+data/*
 media/
 *.pdf
 uploads/
+aapl_extracted.txt
+
+# ---- Eval evidence: judged results ARE committed, raw runs are not ----
+!data/eval/
+data/eval/*
+!data/eval/judged_*.json
+
+# ---- Corpus: real filings, re-fetchable, never committed ----
+!data/corpus/
+data/corpus/*
+!data/corpus/.gitkeep
 
 # ---- Container data volumes (re-buildable) ----
 qdrant_storage/
@@ -31,10 +44,3 @@ pgdata/
 .idea/
 .DS_Store
 *.log
-
-# corpus — real filings, re-fetchable, never committed to git
-data/corpus/*
-!data/corpus/.gitkeepaapl_extracted.txt
-
-!data/eval/
-!data/eval/*.json
