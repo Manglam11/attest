@@ -59,6 +59,7 @@ services:
     volumes:
       - ./engine/app:/code/app
       - ./data/eval:/code/data/eval
+      - hf_cache:/root/.cache/huggingface
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - JUDGE_API_KEY=${JUDGE_API_KEY}

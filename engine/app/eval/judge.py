@@ -8,7 +8,7 @@ from pathlib import Path
 
 import instructor
 from google import genai
-from ragas.embeddings import GoogleEmbeddings
+from ragas.embeddings import HuggingFaceEmbeddings
 from ragas.llms.base import InstructorLLM
 from ragas.metrics.collections import (
     AnswerRelevancy,
@@ -18,7 +18,7 @@ from ragas.metrics.collections import (
 
 EVAL_DIR = Path(os.getenv("EVAL_DIR", "/code/data/eval"))
 JUDGE_MODEL = "gemini-3.5-flash-lite"
-EMBED_MODEL = "gemini-embedding-001"
+EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 REFUSAL = "I cannot answer this from the provided sources"
 PACE_S = float(os.getenv("JUDGE_PACE_S", "45"))
 TARGETS = {
@@ -89,24 +89,30 @@ def write_judged(out_path: Path, run_name: str, rows: list) -> None:
     )
 
 
-async def judge_row(row, metrics):
+async def judge_row(row, metrics, only=None):
     faith, relevancy, precision = metrics
     q, a, ctx = row["question"], row["answer"] or "", row.get("contexts") or []
-    faithfulness = score_value(
-        await faith.ascore(user_input=q, response=a, retrieved_contexts=ctx)
-    )
-    await asyncio.sleep(PACE_S)
-    answer_relevancy = score_value(await relevancy.ascore(user_input=q, response=a))
-    await asyncio.sleep(PACE_S)
-    context_precision = score_value(
-        await precision.ascore(user_input=q, response=a, retrieved_contexts=ctx)
-    )
-    await asyncio.sleep(PACE_S)
-    return {
-        "faithfulness": faithfulness,
-        "answer_relevancy": answer_relevancy,
-        "context_precision": context_precision,
-    }
+    scores = {}
+
+    if only is None or "faithfulness" in only:
+        scores["faithfulness"] = score_value(
+            await faith.ascore(user_input=q, response=a, retrieved_contexts=ctx)
+        )
+        await asyncio.sleep(PACE_S)
+
+    if only is None or "answer_relevancy" in only:
+        scores["answer_relevancy"] = score_value(
+            await relevancy.ascore(user_input=q, response=a)
+        )
+        await asyncio.sleep(PACE_S)
+
+    if only is None or "context_precision" in only:
+        scores["context_precision"] = score_value(
+            await precision.ascore(user_input=q, response=a, retrieved_contexts=ctx)
+        )
+        await asyncio.sleep(PACE_S)
+
+    return scores
 
 
 async def main(limit):
@@ -116,7 +122,7 @@ async def main(limit):
 
     client = genai.Client(api_key=key)
     llm = build_llm(client)
-    embeddings = GoogleEmbeddings(client=client, model=EMBED_MODEL)
+    embeddings = HuggingFaceEmbeddings(model=EMBED_MODEL)
     metrics = (
         Faithfulness(llm=llm),
         AnswerRelevancy(llm=llm, embeddings=embeddings),
@@ -151,6 +157,7 @@ async def main(limit):
             "answer": row["answer"],
             "refused": REFUSAL.lower() in (row["answer"] or "").lower(),
             "scores": None,
+            "embed_model": None,
             "error": None,
         }
 
@@ -161,26 +168,46 @@ async def main(limit):
             flush()
             continue
 
-        if q in done:
-            record["scores"] = done[q]
+        prior_row = judged_by_q.get(q)
+        prior_scores = prior_row["scores"] if prior_row else None
+        prior_embed_model = prior_row.get("embed_model") if prior_row else None
+
+        if prior_scores and prior_embed_model == EMBED_MODEL:
+            # faithfulness/context_precision never touch the embedder, so this
+            # only skips work when answer_relevancy was scored under the same
+            # ruler we're using now
+            record["scores"] = prior_scores
+            record["embed_model"] = prior_embed_model
             s = record["scores"]
             print(f"[{i}] f={s['faithfulness']:.2f} ar={s['answer_relevancy']:.2f} "
-                  f"cp={s['context_precision']:.2f}  (cached)")
+                  f"cp={s['context_precision']:.2f}  (cached, embed_model={EMBED_MODEL})")
             judged_by_q[q] = record
             flush()
             continue
 
+        # a scored row whose answer_relevancy was produced by a different
+        # embedder needs only that metric recomputed — faithfulness and
+        # context_precision are still valid under the new ruler
+        only = {"answer_relevancy"} if prior_scores else None
+
         t0 = time.time()
         try:
-            record["scores"] = await judge_row(row, metrics)
+            fresh = await judge_row(row, metrics, only=only)
             spent += 1
+            record["scores"] = {**prior_scores, **fresh} if prior_scores else fresh
+            record["embed_model"] = EMBED_MODEL
             s = record["scores"]
+            tag = f"ar-only, was {prior_embed_model}" if prior_scores else "fresh"
             print(f"[{i}] f={s['faithfulness']:.2f} ar={s['answer_relevancy']:.2f} "
                   f"cp={s['context_precision']:.2f}  ({time.time() - t0:.0f}s) "
-                  f"| {row['question'][:50]}")
+                  f"[{tag}] | {row['question'][:50]}")
         except Exception as e:
             spent += 1
             record["error"] = f"{type(e).__name__}: {e}"
+            if prior_scores:
+                # keep the still-valid faithfulness/context_precision; embed_model
+                # stays unset so a later run knows answer_relevancy is stale
+                record["scores"] = prior_scores
             print(f"[{i}] ERROR {record['error']}")
             judged_by_q[q] = record
             flush()
@@ -196,6 +223,7 @@ async def main(limit):
                         "answer": r["answer"],
                         "refused": REFUSAL.lower() in (r["answer"] or "").lower(),
                         "scores": None,
+                        "embed_model": None,
                         "error": "not attempted",
                     }
                 flush()
