@@ -7,11 +7,13 @@ from datetime import datetime, timezone
 import httpx
 
 from app.eval.gold_set import GOLD_SET
+from app.quota import remaining, used_today
 
 ENGINE_URL = os.environ.get("ENGINE_URL", "http://engine:8000")
 OUTPUT_DIR = "/code/data/eval"
 PACE_SECONDS = float(os.environ.get("PACE_SECONDS", "30"))
 TIMEOUT = 300.0
+AGENT_DAILY_CEILING = int(os.environ.get("AGENT_DAILY_CEILING", "20"))
 
 
 def load_previous():
@@ -32,6 +34,10 @@ def ask(client, question):
 
 
 def collect():
+    print(
+        f"agent quota: {used_today()}/{AGENT_DAILY_CEILING} calls used today, "
+        f"{remaining(AGENT_DAILY_CEILING)} remaining\n"
+    )
     answered = load_previous()
     print(f"resuming: {len(answered)} question(s) already answered\n")
 
@@ -59,13 +65,19 @@ def collect():
             }
             try:
                 payload, elapsed = ask(client, question)
+                # §02's p95 is defined as engine timing, not a client-side
+                # stopwatch — payload["latency_s"] is the FastAPI handler's
+                # own measurement. elapsed (client wall time) is kept only as
+                # a fallback for engines predating this instrumentation.
+                engine_latency = payload.get("latency_s")
                 record.update(
                     answer=payload["answer"],
                     contexts=payload["contexts"],
                     tool_calls=payload["tool_calls"],
-                    latency_s=round(elapsed, 2),
+                    latency_s=engine_latency if engine_latency is not None else round(elapsed, 2),
                 )
-                print(f"[{index:2}/{len(GOLD_SET)}] {elapsed:6.1f}s  {question[:58]}")
+                print(f"[{index:2}/{len(GOLD_SET)}] {record['latency_s']:6.2f}s (engine)"
+                      f"  {question[:50]}")
             except Exception as exc:
                 record["error"] = f"{type(exc).__name__}: {exc}"
                 print(f"[{index:2}/{len(GOLD_SET)}]  FAILED  {record['error'][:70]}")

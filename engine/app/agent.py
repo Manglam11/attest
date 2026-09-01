@@ -5,6 +5,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+from app.quota import QuotaCounterCallback
 from app.tools import retrieve_document_chunks
 
 MODEL = "gemini-3.6-flash"
@@ -58,7 +59,10 @@ def _collect_contexts(messages) -> list[str]:
 
 
 def run_agent(question: str) -> dict:
-    result = agent.invoke({"messages": [{"role": "user", "content": question}]})
+    result = agent.invoke(
+        {"messages": [{"role": "user", "content": question}]},
+        config={"callbacks": [QuotaCounterCallback()]},
+    )
     messages = result["messages"]
 
     tool_calls = []

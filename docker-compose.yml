@@ -28,6 +28,7 @@ services:
       - ./engine/app:/code/app
       - ./data/corpus:/code/data/corpus:ro
       - ./data/figures:/code/data/figures
+      - ./data/quota:/code/data/quota
       - hf_cache:/root/.cache/huggingface
     container_name: attest_engine
     ports:
@@ -59,6 +60,7 @@ services:
     volumes:
       - ./engine/app:/code/app
       - ./data/eval:/code/data/eval
+      - ./data/quota:/code/data/quota:ro
       - hf_cache:/root/.cache/huggingface
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
