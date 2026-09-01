@@ -19,6 +19,13 @@ CALLS_PER_ASK = 2.08
 
 ANSWERABLE = [item["question"] for item in GOLD_SET if item["answer_key"] != "UNANSWERABLE"]
 
+QUESTION_CATEGORIES = [
+    [ANSWERABLE[i] for i in (0, 1, 2, 3, 4, 5, 7)],
+    [ANSWERABLE[i] for i in (6, 8)],
+    [ANSWERABLE[i] for i in (9, 10)],
+    [ANSWERABLE[i] for i in (11,)],
+]
+
 
 class EngineUnhealthy(RuntimeError):
     pass
@@ -60,24 +67,39 @@ def next_questions(samples: list, n: int) -> list:
     for s in samples:
         if s["question"] in counts:
             counts[s["question"]] += 1
-    ordered = sorted(ANSWERABLE, key=lambda q: (counts[q], ANSWERABLE.index(q)))
-    return ordered[:n]
+    queues = [
+        sorted(group, key=lambda q: (counts[q], ANSWERABLE.index(q)))
+        for group in QUESTION_CATEGORIES
+    ]
+    picked = []
+    while len(picked) < n and any(queues):
+        for queue in queues:
+            if not queue:
+                continue
+            picked.append(queue.pop(0))
+            if len(picked) == n:
+                break
+    return picked
 
 
 def draw(client: httpx.Client, question: str) -> dict:
+    quota_before = used_today()
     started = time.perf_counter()
     response = client.post(f"{ENGINE_URL}/ask", json={"question": question})
     elapsed = time.perf_counter() - started
     response.raise_for_status()
     payload = response.json()
     engine_latency = payload.get("latency_s")
+    quota_after = used_today()
     return {
         "question": question,
         "latency_s": engine_latency if engine_latency is not None else round(elapsed, 3),
         "source": "engine" if engine_latency is not None else "client",
         "day": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "sampled_at": datetime.now(timezone.utc).isoformat(),
-        "quota_used_after": used_today(),
+        "quota_before": quota_before,
+        "quota_after": quota_after,
+        "calls_this_ask": quota_after - quota_before,
     }
 
 
