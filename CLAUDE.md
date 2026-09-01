@@ -43,38 +43,39 @@ The self-grading layer is the product, not decoration. Correctness before polish
 | figure-grounded | ≥ 80% (aspirational) |
 | p95 latency | ≤ 8s |
 
-## Where the build stands — Turn 5 of 7, in progress
+## Where the build stands — Turn 5 CLOSED, Turn 6 (product shell) next
 
-Turns 1–4 complete: walking skeleton, hybrid retrieval + reranker, multimodal
-figures, agentic routing. Turn 5 (trust + eval) is open. Turns 6–7 (product shell,
-ship it) untouched.
+Turns 1–5 complete: walking skeleton, hybrid retrieval + reranker, multimodal
+figures, agentic routing, trust + eval. Turns 6–7 (product shell, ship it)
+untouched.
 
-Judge complete: **12 of 12** answerable rows, scored under one embedder
-(`BAAI/bge-small-en-v1.5`), mixed-ruler guard clean. faithfulness 1.000 ·
-answer relevancy 0.979 — both pass. Hallucination flag passes: refusal 3/3 on
-unanswerable rows. **Context precision 0.774 fails** the 0.85 target — a
-measured, diagnosed failure, not a coverage gap. Cause: the reranker ranks
-lexically-similar wrong tables (equity roll-forward, segment, deferred-tax)
-above the answer-bearing chunk on three rows, plus one genuine miss buried at
-rank 7/20 in the fusion pool. Fixing it is the scheduled Turn 2 retrieval
-deepening pass — not open Turn 5 work.
+§02 table, complete — six of six rows measured or explicitly named as not:
 
-p95 latency is the one §02 number still unmeasured, blocked on the agent key's
-20 RPD ceiling rather than on engineering.
+| Metric | Target | Measured | Verdict |
+| --- | --- | --- | --- |
+| faithfulness | ≥ 0.90 | 1.000 (n=12, one embedder) | PASS |
+| retrieval precision | ≥ 0.85 | 0.774 (n=12) | **FAIL — diagnosed** |
+| answer relevance | ≥ 0.85 | 0.979 (n=12, one embedder) | PASS |
+| hallucination flag | < 0.50 | 0/3 (3/3 unanswerable correctly refused) | PASS |
+| figure-grounded | ≥ 80% (aspirational) | not attempted — one-figure corpus | n/a |
+| p95 latency | ≤ 8s | n=7, all > 8s (43s–196s); 95%-confidence upper bound on the share below 8s ≈ 35% | **EXCLUDED, not narrowly missed** |
+
+Retrieval precision's cause is known: the reranker ranks lexically-similar
+wrong tables (equity roll-forward, segment, deferred-tax) above the
+answer-bearing chunk on three rows, plus one genuine miss at rank 7/20 in the
+fusion pool. Fix is a scheduled Turn 2 retrieval-deepening pass, not reopened
+Turn 5 work. p95's cause is not yet isolated — that diagnosis is owed
+whenever latency work resumes, not claimed here.
 
 Proven: agent answers all 15 gold questions correctly; refusal path works; the
 verbatim refusal sentence is a programmatic seam.
 
-## Open, in priority order
+## Carried forward, past Turn 5
 
-1. **Harness latency resume path** — must re-derive latency on every read, not
-   replay a cached value, or it silently defeats p95 sampling.
-2. **p95 unmeasured** — needs ~10 fresh `/ask` calls against the 20 RPD ceiling.
-   Size the run and get a yes before spending.
-3. **`JOURNAL.md` does not exist** — the blueprint requires it. Seed it from
-   `docs/sessions/`.
-4. **`generate.py` orphaned** from `/ask` since the agent landed — decide:
-   delete, or keep as a documented fallback.
+- **Turn 2 retrieval-deepening pass** — fix the reranker's near-miss confusion
+  on financial tables (diagnosis above). Not started.
+- **p95 root cause** — not isolated. Latency work resumes with instrumentation
+  before any further sampling.
 
 ## Environment
 
@@ -87,14 +88,15 @@ verbatim refusal sentence is a programmatic seam.
 - Two keys, two ceilings: `GEMINI_API_KEY` → agent (`gemini-3.6-flash`, ~20 RPD,
   the binding constraint) · `JUDGE_API_KEY` → judge (`gemini-3.5-flash-lite`).
   Secrets are passed per-key in compose; nothing inherits.
-- Eval artifacts in `data/eval/`. `run_*.json` ignored, `judged_*.json` tracked.
+- Eval artifacts in `data/eval/`. `run_*.json` ignored; `judged_*.json` and
+  `latency_samples.json` tracked.
 - Pins that are workarounds, not preferences: `ragas 0.4.3`,
   `langchain-community==0.3.31`, `jsonref`, and a direct `InstructorLLM`
   construction bypassing `llm_factory` (which cannot produce an async Google client).
 
 ## History
 
-`docs/blueprint.pdf` is what we build. `docs/sessions/` holds thirteen session logs —
+`docs/blueprint.pdf` is what we build. `docs/sessions/` holds fifteen session logs —
 read the newest first; each one supersedes older claims. `JOURNAL.md` is the
 per-turn record of real problems and concrete fixes.
 - **Resume paths re-validate cached fields; they do not replay them.** Three
