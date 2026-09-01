@@ -69,13 +69,22 @@ class LatencySamplingTests(unittest.TestCase):
         with self.assertRaises(self.latency.EngineUnhealthy):
             self.latency.check_health(client)
 
-    def test_quota_gate_blocks_when_run_exceeds_remaining(self):
+    def test_quota_gate_blocks_on_worst_case_not_average(self):
         Path(self.tmp.name, "agent_calls.json").write_text(
-            json.dumps({"date": self.quota._today(), "count": 10})
+            json.dumps({"date": self.quota._today(), "count": 17})
         )
-        self.latency.check_quota(1)
+        history = [{"question": "q", "calls_this_ask": c} for c in (2, 2, 2, 3, 2)]
+        self.latency.check_quota(history)
+        history.append({"question": "q", "calls_this_ask": 4})
         with self.assertRaises(self.latency.QuotaExceeded):
-            self.latency.check_quota(5)
+            self.latency.check_quota(history)
+
+    def test_quota_gate_falls_back_to_measured_default_with_no_history(self):
+        Path(self.tmp.name, "agent_calls.json").write_text(
+            json.dumps({"date": self.quota._today(), "count": 17})
+        )
+        with self.assertRaises(self.latency.QuotaExceeded):
+            self.latency.check_quota([])
 
 
 if __name__ == "__main__":

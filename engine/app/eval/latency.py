@@ -15,7 +15,7 @@ OUTPUT_PATH = Path(os.environ.get("EVAL_DIR", "/code/data/eval")) / "latency_sam
 TIMEOUT = 300.0
 PACE_SECONDS = float(os.environ.get("PACE_SECONDS", "30"))
 AGENT_DAILY_CEILING = int(os.environ.get("AGENT_DAILY_CEILING", "20"))
-CALLS_PER_ASK = 2.08
+MEASURED_WORST_CALLS_PER_ASK = 4
 
 ANSWERABLE = [item["question"] for item in GOLD_SET if item["answer_key"] != "UNANSWERABLE"]
 
@@ -44,11 +44,16 @@ def check_health(client: httpx.Client) -> None:
         raise EngineUnhealthy(f"unexpected /health response: {response.status_code} {response.text[:120]}")
 
 
-def check_quota(n: int) -> None:
-    needed = n * CALLS_PER_ASK
+def worst_case_calls(samples: list) -> float:
+    observed = [s["calls_this_ask"] for s in samples if "calls_this_ask" in s]
+    return float(max(observed)) if observed else float(MEASURED_WORST_CALLS_PER_ASK)
+
+
+def check_quota(samples: list) -> None:
+    needed = worst_case_calls(samples)
     have = remaining(AGENT_DAILY_CEILING)
     if needed > have:
-        raise QuotaExceeded(f"{n} asks needs ~{needed:.1f} calls, only {have} remain today")
+        raise QuotaExceeded(f"next ask could cost up to {needed:.0f} calls, only {have} remain today")
 
 
 def load_samples() -> list:
@@ -105,10 +110,14 @@ def draw(client: httpx.Client, question: str) -> dict:
 
 def run_with_client(client: httpx.Client, n: int) -> list:
     check_health(client)
-    check_quota(n)
     samples = load_samples()
     targets = next_questions(samples, n)
     for index, question in enumerate(targets, start=1):
+        try:
+            check_quota(samples)
+        except QuotaExceeded:
+            save_samples(samples)
+            raise
         try:
             sample = draw(client, question)
         except Exception:
@@ -133,7 +142,8 @@ def main():
     args = parser.parse_args()
     n = args.n
     if n is None:
-        n = min(len(ANSWERABLE), int(remaining(AGENT_DAILY_CEILING) // CALLS_PER_ASK))
+        worst_case = worst_case_calls(load_samples())
+        n = min(len(ANSWERABLE), int(remaining(AGENT_DAILY_CEILING) // worst_case))
     print(f"agent quota: {used_today()}/{AGENT_DAILY_CEILING} calls used today, "
           f"{remaining(AGENT_DAILY_CEILING)} remaining — sampling {n} fresh ask(s)\n")
     samples = run(n)
