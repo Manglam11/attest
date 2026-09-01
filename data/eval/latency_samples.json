@@ -1,0 +1,74 @@
+{
+  "samples": [
+    {
+      "question": "What were Apple's total net sales for fiscal 2025?",
+      "latency_s": 53.623,
+      "source": "engine",
+      "day": "2026-09-01",
+      "sampled_at": "2026-09-01T16:31:46.982931+00:00",
+      "quota_before": 2,
+      "quota_after": 4,
+      "calls_this_ask": 2
+    },
+    {
+      "question": "What were Apple's total assets as of the end of fiscal 2025?",
+      "latency_s": 84.285,
+      "source": "engine",
+      "day": "2026-09-01",
+      "sampled_at": "2026-09-01T16:33:41.264511+00:00",
+      "quota_before": 4,
+      "quota_after": 6,
+      "calls_this_ask": 2
+    },
+    {
+      "question": "In the five-year stock performance graph, what was the ending value of a $100 investment in Apple common stock as of September 2025?",
+      "latency_s": 91.249,
+      "source": "engine",
+      "day": "2026-09-01",
+      "sampled_at": "2026-09-01T16:35:42.509247+00:00",
+      "quota_before": 6,
+      "quota_after": 8,
+      "calls_this_ask": 2
+    },
+    {
+      "question": "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?",
+      "latency_s": 122.285,
+      "source": "engine",
+      "day": "2026-09-01",
+      "sampled_at": "2026-09-01T16:38:14.788377+00:00",
+      "quota_before": 8,
+      "quota_after": 10,
+      "calls_this_ask": 2
+    },
+    {
+      "question": "What was Apple's cost of sales in fiscal 2025?",
+      "latency_s": 67.078,
+      "source": "engine",
+      "day": "2026-09-01",
+      "sampled_at": "2026-09-01T16:39:51.863542+00:00",
+      "quota_before": 10,
+      "quota_after": 13,
+      "calls_this_ask": 3
+    },
+    {
+      "question": "What was the total of Apple's cash, cash equivalents, and marketable securities at the end of fiscal 2025?",
+      "latency_s": 195.979,
+      "source": "engine",
+      "day": "2026-09-01",
+      "sampled_at": "2026-09-01T16:43:37.830296+00:00",
+      "quota_before": 13,
+      "quota_after": 17,
+      "calls_this_ask": 4
+    },
+    {
+      "question": "What base amount was assumed invested in the stock performance comparison graph as of September 2020?",
+      "latency_s": 43.464,
+      "source": "engine",
+      "day": "2026-09-01",
+      "sampled_at": "2026-09-01T16:44:51.294300+00:00",
+      "quota_before": 17,
+      "quota_after": 19,
+      "calls_this_ask": 2
+    }
+  ]
+}
