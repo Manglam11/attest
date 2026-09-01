@@ -49,28 +49,32 @@ Turns 1–4 complete: walking skeleton, hybrid retrieval + reranker, multimodal
 figures, agentic routing. Turn 5 (trust + eval) is open. Turns 6–7 (product shell,
 ship it) untouched.
 
-Judged: **4 of 12** answerable rows. faithfulness 1.000 · answer relevancy 0.988 ·
-context precision 0.883. Not claimable as the §02 result until all 12 are scored.
+Judge complete: **12 of 12** answerable rows, scored under one embedder
+(`BAAI/bge-small-en-v1.5`), mixed-ruler guard clean. faithfulness 1.000 ·
+answer relevancy 0.979 — both pass. Hallucination flag passes: refusal 3/3 on
+unanswerable rows. **Context precision 0.774 fails** the 0.85 target — a
+measured, diagnosed failure, not a coverage gap. Cause: the reranker ranks
+lexically-similar wrong tables (equity roll-forward, segment, deferred-tax)
+above the answer-bearing chunk on three rows, plus one genuine miss buried at
+rank 7/20 in the fusion pool. Fixing it is the scheduled Turn 2 retrieval
+deepening pass — not open Turn 5 work.
+
+p95 latency is the one §02 number still unmeasured, blocked on the agent key's
+20 RPD ceiling rather than on engineering.
 
 Proven: agent answers all 15 gold questions correctly; refusal path works; the
 verbatim refusal sentence is a programmatic seam.
 
 ## Open, in priority order
 
-1. **Finish the judge** — rows 4–11 unscored. Blocked on an unidentified quota wall
-   at row 5: `429 aiplatform.googleapis.com` — a Vertex metric, not the Generative
-   Language 15 RPM ceiling. The full quota name has never been read. Identify it
-   before pacing changes.
-2. **`judge.py` write-merge bug** — each run rewrites the judged file with only the
-   rows that run touched. Rows scored in an earlier pass and skipped in a later one
-   are dropped from the file. Seed the output list from the prior file's rows.
-3. **Row 3 context precision 0.58** — first sub-target row, uninvestigated. Contexts
-   are on disk; costs nothing to read.
-4. **p95 unmeasured** — needs ~10 fresh `/ask` calls against a 20 RPD ceiling.
-5. **`JOURNAL.md` does not exist** — the blueprint requires it. Seed it from
+1. **Harness latency resume path** — must re-derive latency on every read, not
+   replay a cached value, or it silently defeats p95 sampling.
+2. **p95 unmeasured** — needs ~10 fresh `/ask` calls against the 20 RPD ceiling.
+   Size the run and get a yes before spending.
+3. **`JOURNAL.md` does not exist** — the blueprint requires it. Seed it from
    `docs/sessions/`.
-6. **`generate.py` orphaned** from `/ask` since the agent landed — delete or keep as
-   documented fallback.
+4. **`generate.py` orphaned** from `/ask` since the agent landed — decide:
+   delete, or keep as a documented fallback.
 
 ## Environment
 
