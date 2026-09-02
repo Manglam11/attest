@@ -1,0 +1,491 @@
+{
+  "measured_at": "2026-09-02T00:35:06.143573+00:00",
+  "corpus_point_count": 285,
+  "config": {
+    "embed_model": "BAAI/bge-small-en-v1.5",
+    "sparse_model": "Qdrant/bm25",
+    "rerank_model": "BAAI/bge-reranker-base",
+    "prefetch": 20,
+    "rerank_pool": 20,
+    "top_k": 5
+  },
+  "chunk_id_method": "exact grouped-number token match (regex \\b\\d{1,3}(?:,\\d{3})*(?:\\.\\d+)?\\b) against the full live corpus; ties broken by a required co-occurring keyword, else left ambiguous and every matching chunk id counts as correct",
+  "self_test": {
+    "description": "a fabricated answer_key absent from the corpus must resolve to zero matches",
+    "question_used": "What were Apple's total net sales for fiscal 2025?",
+    "bogus_key_used": "999,999,999",
+    "result": {
+      "corpus_matches": [],
+      "ambiguous": true,
+      "disambiguation": "no-match",
+      "correct_chunk_ids": []
+    },
+    "passed": true
+  },
+  "rows": [
+    {
+      "question": "What were Apple's total net sales for fiscal 2025?",
+      "answer_key": "416,161",
+      "corpus_matches": [
+        {
+          "id": 144,
+          "page": 26
+        },
+        {
+          "id": 147,
+          "page": 27
+        },
+        {
+          "id": 171,
+          "page": 33
+        },
+        {
+          "id": 192,
+          "page": 40
+        },
+        {
+          "id": 238,
+          "page": 53
+        },
+        {
+          "id": 239,
+          "page": 53
+        },
+        {
+          "id": 241,
+          "page": 54
+        }
+      ],
+      "ambiguous": true,
+      "disambiguation": "unresolved-multiple",
+      "correct_chunk_ids": [
+        144,
+        147,
+        171,
+        192,
+        238,
+        239,
+        241
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 2,
+      "rerank_pool_size": 20,
+      "rerank_rank": 1,
+      "rerank_score_correct": 0.9271107316017151,
+      "rerank_score_top1": 0.9271107316017151,
+      "top1_chunk_id": 171,
+      "margin": 0.0,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "What was Apple's cost of sales in fiscal 2025?",
+      "answer_key": "220,960",
+      "corpus_matches": [
+        {
+          "id": 171,
+          "page": 33
+        },
+        {
+          "id": 239,
+          "page": 53
+        }
+      ],
+      "ambiguous": true,
+      "disambiguation": "unresolved-multiple",
+      "correct_chunk_ids": [
+        171,
+        239
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 3,
+      "rerank_pool_size": 20,
+      "rerank_rank": 1,
+      "rerank_score_correct": 0.9219815135002136,
+      "rerank_score_top1": 0.9219815135002136,
+      "top1_chunk_id": 171,
+      "margin": 0.0,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "What was Apple's net income for fiscal 2025?",
+      "answer_key": "112,010",
+      "corpus_matches": [
+        {
+          "id": 171,
+          "page": 33
+        },
+        {
+          "id": 172,
+          "page": 33
+        },
+        {
+          "id": 173,
+          "page": 34
+        },
+        {
+          "id": 177,
+          "page": 36
+        },
+        {
+          "id": 179,
+          "page": 37
+        },
+        {
+          "id": 193,
+          "page": 40
+        }
+      ],
+      "ambiguous": true,
+      "disambiguation": "unresolved-multiple",
+      "correct_chunk_ids": [
+        171,
+        172,
+        173,
+        177,
+        179,
+        193
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 1,
+      "rerank_pool_size": 20,
+      "rerank_rank": 1,
+      "rerank_score_correct": 0.9721691012382507,
+      "rerank_score_top1": 0.9721691012382507,
+      "top1_chunk_id": 173,
+      "margin": 0.0,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "How much did Apple spend on research and development in fiscal 2025?",
+      "answer_key": "34,550",
+      "corpus_matches": [
+        {
+          "id": 150,
+          "page": 28
+        },
+        {
+          "id": 171,
+          "page": 33
+        },
+        {
+          "id": 239,
+          "page": 53
+        }
+      ],
+      "ambiguous": true,
+      "disambiguation": "unresolved-multiple",
+      "correct_chunk_ids": [
+        150,
+        171,
+        239
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 8,
+      "rerank_pool_size": 20,
+      "rerank_rank": 4,
+      "rerank_score_correct": 0.5349698066711426,
+      "rerank_score_top1": 0.9173677563667297,
+      "top1_chunk_id": 240,
+      "margin": 0.38239794969558716,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "What was Apple's diluted earnings per share in fiscal 2025?",
+      "answer_key": "7.46",
+      "corpus_matches": [
+        {
+          "id": 172,
+          "page": 33
+        },
+        {
+          "id": 193,
+          "page": 40
+        },
+        {
+          "id": 194,
+          "page": 40
+        }
+      ],
+      "ambiguous": true,
+      "disambiguation": "unresolved-multiple",
+      "correct_chunk_ids": [
+        172,
+        193,
+        194
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 1,
+      "rerank_pool_size": 20,
+      "rerank_rank": 1,
+      "rerank_score_correct": 0.9986171722412109,
+      "rerank_score_top1": 0.9986171722412109,
+      "top1_chunk_id": 172,
+      "margin": 0.0,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "How many diluted shares did Apple use to compute earnings per share in fiscal 2025?",
+      "answer_key": "15,004,697",
+      "corpus_matches": [
+        {
+          "id": 172,
+          "page": 33
+        },
+        {
+          "id": 193,
+          "page": 40
+        },
+        {
+          "id": 194,
+          "page": 40
+        }
+      ],
+      "ambiguous": true,
+      "disambiguation": "unresolved-multiple",
+      "correct_chunk_ids": [
+        172,
+        193,
+        194
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 1,
+      "rerank_pool_size": 20,
+      "rerank_rank": 1,
+      "rerank_score_correct": 0.9993284940719604,
+      "rerank_score_top1": 0.9993284940719604,
+      "top1_chunk_id": 172,
+      "margin": 0.0,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "What were Apple's total assets as of the end of fiscal 2025?",
+      "answer_key": "359,241",
+      "corpus_matches": [
+        {
+          "id": 175,
+          "page": 35
+        },
+        {
+          "id": 176,
+          "page": 35
+        }
+      ],
+      "ambiguous": true,
+      "disambiguation": "unresolved-multiple",
+      "correct_chunk_ids": [
+        175,
+        176
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 3,
+      "rerank_pool_size": 20,
+      "rerank_rank": 3,
+      "rerank_score_correct": 0.9294595122337341,
+      "rerank_score_top1": 0.9851499795913696,
+      "top1_chunk_id": 178,
+      "margin": 0.0556904673576355,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "What was Apple's operating income for fiscal 2025?",
+      "answer_key": "133,050",
+      "corpus_matches": [
+        {
+          "id": 171,
+          "page": 33
+        },
+        {
+          "id": 239,
+          "page": 53
+        }
+      ],
+      "ambiguous": true,
+      "disambiguation": "unresolved-multiple",
+      "correct_chunk_ids": [
+        171,
+        239
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 2,
+      "rerank_pool_size": 20,
+      "rerank_rank": 4,
+      "rerank_score_correct": 0.7069462537765503,
+      "rerank_score_top1": 0.9499062895774841,
+      "top1_chunk_id": 240,
+      "margin": 0.24296003580093384,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "What was the total of Apple's cash, cash equivalents, and marketable securities at the end of fiscal 2025?",
+      "answer_key": "132.4",
+      "corpus_matches": [
+        {
+          "id": 153,
+          "page": 29
+        }
+      ],
+      "ambiguous": false,
+      "disambiguation": "unique",
+      "correct_chunk_ids": [
+        153
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 4,
+      "rerank_pool_size": 20,
+      "rerank_rank": 5,
+      "rerank_score_correct": 0.946083664894104,
+      "rerank_score_top1": 0.9930012226104736,
+      "top1_chunk_id": 175,
+      "margin": 0.04691755771636963,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "In the five-year stock performance graph, what was the ending value of a $100 investment in Apple common stock as of September 2025?",
+      "answer_key": "234",
+      "corpus_matches": [
+        {
+          "id": 137,
+          "page": 24
+        }
+      ],
+      "ambiguous": false,
+      "disambiguation": "unique",
+      "correct_chunk_ids": [
+        137
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 1,
+      "rerank_pool_size": 20,
+      "rerank_rank": 1,
+      "rerank_score_correct": 0.9980236291885376,
+      "rerank_score_top1": 0.9980236291885376,
+      "top1_chunk_id": 137,
+      "margin": 0.0,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "What base amount was assumed invested in the stock performance comparison graph as of September 2020?",
+      "answer_key": "100",
+      "corpus_matches": [
+        {
+          "id": 135,
+          "page": 23
+        },
+        {
+          "id": 137,
+          "page": 24
+        },
+        {
+          "id": 138,
+          "page": 24
+        },
+        {
+          "id": 157,
+          "page": 30
+        },
+        {
+          "id": 165,
+          "page": 31
+        },
+        {
+          "id": 166,
+          "page": 31
+        },
+        {
+          "id": 195,
+          "page": 41
+        },
+        {
+          "id": 196,
+          "page": 41
+        },
+        {
+          "id": 284,
+          "page": 24
+        }
+      ],
+      "ambiguous": false,
+      "disambiguation": "keyword:'Index' narrowed 9->3",
+      "correct_chunk_ids": [
+        137,
+        138,
+        284
+      ],
+      "fusion_pool_size": 20,
+      "fusion_rank": 1,
+      "rerank_pool_size": 20,
+      "rerank_rank": 1,
+      "rerank_score_correct": 0.9986190795898438,
+      "rerank_score_top1": 0.9986190795898438,
+      "top1_chunk_id": 137,
+      "margin": 0.0,
+      "stage_responsible": "clean",
+      "top_k_cut": 5,
+      "derived_value_note": null
+    },
+    {
+      "question": "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?",
+      "answer_key": "381,611",
+      "corpus_matches": [],
+      "ambiguous": true,
+      "disambiguation": "no-match",
+      "correct_chunk_ids": [],
+      "fusion_pool_size": 20,
+      "fusion_rank": null,
+      "rerank_pool_size": 20,
+      "rerank_rank": null,
+      "rerank_score_correct": null,
+      "rerank_score_top1": 0.9390933513641357,
+      "top1_chunk_id": 151,
+      "margin": null,
+      "stage_responsible": "never_entered_pool",
+      "top_k_cut": 5,
+      "derived_value_note": {
+        "operands": [
+          "416,161",
+          "34,550"
+        ],
+        "chunks_containing_all_operands": [
+          171,
+          239
+        ],
+        "operand_chunks_in_fusion_pool": [
+          171
+        ],
+        "operand_chunk_fusion_rank": 3
+      }
+    }
+  ],
+  "summary": {
+    "n_answerable": 12,
+    "clean": 11,
+    "near_miss": 0,
+    "genuine_miss": 1,
+    "genuine_miss_excluding_derived_value_rows": 0,
+    "derived_value_rows": 1,
+    "ambiguous_rows": 9,
+    "near_miss_margins": [],
+    "near_miss_margin_min": null,
+    "near_miss_margin_max": null
+  }
+}
