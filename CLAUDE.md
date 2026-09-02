@@ -48,11 +48,28 @@ The self-grading layer is the product, not decoration. Correctness before polish
 | figure-grounded | ≥ 80% (aspirational) |
 | p95 latency | ≤ 8s |
 
-## Where the build stands — Turn 5 CLOSED, Turn 6 (product shell) next
+## Where the build stands — Turn 6 (product shell) IN PROGRESS, not complete
 
 Turns 1–5 complete: walking skeleton, hybrid retrieval + reranker, multimodal
-figures, agentic routing, trust + eval. Turns 6–7 (product shell, ship it)
-untouched.
+figures, agentic routing, trust + eval. Turn 7 (ship it) untouched.
+
+Turn 6 — tenancy: T6.0–T6.5 done. Django on Postgres with real signup/login/
+logout; ingestion is incremental and owner/doc-scoped; the engine verifies a
+signed token and derives `owner_id` from it, never from the request body;
+two-tenant isolation is proven, including a forged-token-rejection control
+(see `JOURNAL.md`, "Turn 6 — Product Shell (Tenancy)", and
+`docs/decisions/0001-tenancy.md`). T6.C (close) fixed the reproducibility
+gap this session: 143 of 428 Qdrant points
+rested on two synthetic PDFs that were built ad hoc and deleted. A
+deterministic generator (`engine/app/gen_synthetic_corpus.py`, PyMuPDF, no
+new dependency) now produces both, committed; the two docs were re-ingested
+from it. Current collection: 304 points — `alice`/`aapl_10k` 285 (real
+filing, re-fetchable per `.gitignore`), `bruno`/`bruno_10k_excerpt` 10,
+`carla`/`carla_10k_excerpt` 9 (both rebuildable from the committed
+generator). Not proven: a live authenticated `/ask` through the shell,
+end to end — blocked on an exhausted free-tier `GEMINI_API_KEY` quota, and
+no paid tier has been spent against to force it. That call is the one thing
+that would prove every T6 seam works together; it's still unmade.
 
 §02 table, complete — six of six rows measured or explicitly named as not:
 
@@ -97,6 +114,13 @@ verbatim refusal sentence is a programmatic seam.
   Retrieval is not the lever at the deployed reranker: 4.7–13.2% of
   observed ask latency, warm (`data/eval/retrieval_timing_20260902T012156Z.json`).
 - **Judge key has no counter or ceiling** — unlike the agent key, `JUDGE_API_KEY` is protected only by fail-fast-and-resume on 429; not building one in Turn 6, which spends nothing metered.
+- **Paid-tier gap** — the free-tier `GEMINI_API_KEY` daily quota is exhausted;
+  a live authenticated `/ask` end to end (shell → engine → model) has never
+  been exercised as a result. Local agent counter shows 2/20 used today
+  (`data/quota/agent_calls.json`), which tracks calls this project made, not
+  Google's own free-tier state — the two can disagree. Resolving this needs
+  either the quota window to roll over or a paid tier, and either way the
+  cost gets stated and confirmed before spending, per rule 3.
 
 ## Environment
 
@@ -117,7 +141,7 @@ verbatim refusal sentence is a programmatic seam.
 
 ## History
 
-`docs/blueprint.pdf` is what we build. `docs/sessions/` holds sixteen session logs —
+`docs/blueprint.pdf` is what we build. `docs/sessions/` holds seventeen session logs —
 read the newest first; each one supersedes older claims. `JOURNAL.md` is the
 per-turn record of real problems and concrete fixes.
 - **Resume paths re-validate cached fields; they do not replay them.** Three

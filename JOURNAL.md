@@ -171,3 +171,51 @@ And I'd carry the discipline that produced the null result in the first
 place: run the experiment once, report what it actually showed even when
 that's "no," and don't let a plausible-sounding fix ship on the strength of
 its story instead of its measurement.
+
+## Turn 6 — Product Shell (Tenancy)
+
+The brief was one sentence — two users cannot see each other's corpus — and
+the survey I ran before writing anything found out how little of that was
+already true. The engine's FastAPI port had been published to the host since
+Turn 1. `/ask` was reachable from any process on this machine, unauthenticated,
+for five turns, and nobody had noticed because nothing had ever needed it to
+be private until a second tenant made the question unavoidable. Fixing it was
+one compose line — stop publishing the port, move the healthcheck inside the
+container. The lesson isn't the line, it's that an open port doesn't announce
+itself; it sits there passing every test you happen to run, because none of
+those tests are "is this reachable from somewhere it shouldn't be."
+
+The shell had the same shape of problem in miniature. Django had been running
+on sqlite behind a Dockerfile that had, as far as I can tell, never actually
+been built and run end to end — Postgres was already provisioned in compose,
+unused. When I finally exercised that Dockerfile, the last line was a second
+copy of the `uv` binary-copy instruction, pasted where a `CMD` should have
+been. The image built without error and would have failed the instant
+anything tried to run it, because it had no entrypoint at all. A Dockerfile
+that has never been run isn't verified, it's just untested code with a
+misleading file extension — the build succeeding tells you nothing about the
+one instruction that only matters at `docker run`.
+
+Both of those are the same failure with different costs: something absent
+(auth, a CMD) leaves no trace of its absence until an unrelated requirement
+forces someone to actually invoke the path. Tenancy's own test carries the
+antidote. Proving alice only sees alice's chunks is not proof the owner
+filter works — if the filter were silently a no-op, or if `owner_id` were
+being read from the request body instead of the verified token, a
+single-tenant test would still pass, because there would be nothing else in
+the store to leak. The filter earns its claim only against a case designed to
+break it: a second tenant's data actually present, and a forged token
+presented and rejected before it ever reaches the query. A match is not
+evidence the mechanism ran; a correctly-rejected forgery is. I'd carry that
+into any access-control feature: write the negative test first, because the
+positive one alone can't tell a working filter from an absent one.
+
+Turn 6 is not complete. T6.0–T6.5 are done — Django on Postgres, incremental
+owner- and doc-scoped ingest, signed-token auth on the engine, two-tenant
+isolation proven with the forged-token control above. What never got proven
+is the thing the whole turn is for: an authenticated ask, through the shell,
+end to end, with a live model answering it. The free-tier Gemini quota was
+exhausted before that run happened, and I did not spend against a paid tier
+to force it this session. That's the honest state to hand off — the wiring
+is proven at every seam I could test for free, and the one call that proves
+all the seams together at once is still unmade.
