@@ -65,11 +65,22 @@ untouched.
 | figure-grounded | ≥ 80% (aspirational) | not attempted — one-figure corpus | n/a |
 | p95 latency | ≤ 8s | n=7, all > 8s (43s–196s); 95%-confidence upper bound on the share below 8s ≈ 35% | **EXCLUDED, not narrowly missed** |
 
-Retrieval precision's cause is known: the reranker ranks lexically-similar
-wrong tables (equity roll-forward, segment, deferred-tax) above the
-answer-bearing chunk on three rows, plus one genuine miss at rank 7/20 in the
-fusion pool. Fix is a scheduled Turn 2 retrieval-deepening pass, not reopened
-Turn 5 work. p95's cause is not yet isolated — that diagnosis is owed
+Retrieval precision's cause, re-diagnosed in the Turn 2 deepening pass
+(Session 17): the paragraph this replaces was itself wrong — its baseline
+had run on the wrong query text and never reproduced. The corrected
+baseline is 11 of 12 gold rows clean; the reranker demotes the correct
+chunk below its fusion-pool rank on exactly two rows (operating income:
+rank 2→4; cash/securities: rank 4→5), both still inside the top-5 cutoff.
+The 12th row is a derived arithmetic answer that never appears verbatim in
+the corpus by construction — not a retrieval miss — and is now scored by
+operand presence instead of the unattainable literal value. A
+higher-capacity reranker (568M vs the deployed 278M params) was tried
+against the two demotions and reverted: precision moved +0.0095 on the
+comparable rows while per-call rerank cost roughly quadrupled (5.7s →
+23.9s mean, warm) against an already-excluded p95 budget. Both demotions
+are now a known, unfixed behavior, not an open unknown — the 0.774 judged
+score stands unmoved, and the next lever for it isn't a bigger CPU
+reranker. p95's cause is not yet isolated — that diagnosis is owed
 whenever latency work resumes, not claimed here.
 
 Proven: agent answers all 15 gold questions correctly; refusal path works; the
@@ -77,8 +88,14 @@ verbatim refusal sentence is a programmatic seam.
 
 ## Carried forward, past Turn 5
 
-- **Turn 2 retrieval-deepening pass** — diagnosis above. Not started.
+- **Turn 2 retrieval-deepening pass** — closed (Session 17) with a null
+  result: diagnosis above re-derived, a bigger reranker tried and
+  reverted. The two demotion rows (operating income, cash/securities) are
+  carried forward unfixed; the retrieval-precision contract row stays at
+  0.774, FAIL.
 - **p95 root cause** — not isolated. Instrument before further sampling.
+  Retrieval is not the lever at the deployed reranker: 4.7–13.2% of
+  observed ask latency, warm (`data/eval/retrieval_timing_20260902T012156Z.json`).
 
 ## Environment
 

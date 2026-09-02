@@ -121,3 +121,53 @@ honest future work, not this session's claim to make. The instinct that ties
 the whole turn together: don't trust a number until you know exactly what
 produced it, cached or otherwise — it's what let this project report its own
 contract failure instead of finding a way to round it into a pass.
+
+## Turn 2 Revisited — Retrieval Deepening (Session 17)
+
+The diagnosis I closed Turn 5 with was wrong, and I found that out by trying
+to reproduce it before touching anything. "The reranker ranks lexically
+similar wrong tables above the answer, plus one genuine miss at rank 7 of
+20" turned out to describe a baseline run that had queried the corpus with
+the wrong text — not the agent's actual queries. Rerun cleanly, the shape
+was different: 11 of 12 gold rows clean, and exactly two rows where the
+reranker demotes the correct chunk below where fusion already had it
+(operating income, rank 2 to rank 4; cash and securities, rank 4 to rank 5).
+The twelfth row isn't a retrieval miss at all — its gold answer is arithmetic
+that never appears verbatim anywhere in the filing, so it can never surface
+by construction. My own scoring check had been holding retrieval responsible
+for a number retrieval could never find; I fixed the check, not the
+retrieval, once I saw that the "miss" was a ruler problem, not a system one.
+
+With an honest diagnosis in hand — two demotions, both inside the top-5 cut
+— the obvious lever was a bigger reranker. I built a free proxy first: a
+local re-scoring of the agent's persisted queries that reproduces the RAGAS
+judged context-precision score exactly on 11 of 12 rows, so I could measure
+a swap without spending a single metered judge call. Swapped in a
+higher-capacity cross-encoder (568M params against the deployed 278M),
+reran the proxy once, and decided on that one run rather than iterating
+until the number looked better. The result was a null: +0.0095 on the
+comparable rows, and not a clean win even at that — three rows regressed,
+one of them (cash/securities) going from a partial hit to missing entirely,
+and both original demotions got worse, not better, under the larger model.
+Meanwhile its warm per-call cost was roughly four times the deployed
+model's — 5.7s mean going to 23.9s, with two calls spiking past 58s — against
+a p95 budget the project is already excluded from, not narrowly missing. A
+marginal, mixed precision gain bought at a 4x latency cost that lands on an
+already-failing metric isn't a trade worth taking. I reverted it and
+confirmed the revert at weight level rather than trusting the commit
+message: 278,044,417 parameters back on disk, not 567,755,777.
+
+Nothing in the §02 contract moved this session. Retrieval precision is still
+0.774, still FAIL, on the same judged run as before — I never spent a judge
+call, because the proxy's own result didn't clear the bar for asking whether
+the real metric agreed. What I have instead is better than a number that
+didn't move: a diagnosis that actually reproduces, a zero-cost ruler I can
+reuse the next time a retrieval change is proposed, and two specific rows
+that are now a known, unfixed behavior rather than an unexamined one. I'd
+carry the proxy pattern into any project with a metered grader — validate a
+free local approximation against the expensive ground truth once, then
+spend real judge calls only on changes the free ruler says are worth it.
+And I'd carry the discipline that produced the null result in the first
+place: run the experiment once, report what it actually showed even when
+that's "no," and don't let a plausible-sounding fix ship on the strength of
+its story instead of its measurement.
