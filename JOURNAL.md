@@ -219,3 +219,53 @@ exhausted before that run happened, and I did not spend against a paid tier
 to force it this session. That's the honest state to hand off — the wiring
 is proven at every seam I could test for free, and the one call that proves
 all the seams together at once is still unmade.
+
+That call happened this session. One question — Apple's fiscal 2025 net
+income — through a Django-minted token, into the engine, and back with the
+right figure and page citations, tool_calls showing a self-composed
+retrieval query rather than a hardcoded one. It closes a gap the forged-token
+control could never close by itself: rejecting a bad token proves the check
+rejects what it should, but nothing before this proved it *accepts* what it
+should. A system that rejects every token passes a forged-token test
+perfectly while being useless — only a call that succeeds distinguishes
+"the check works" from "the check rejects unconditionally." Everything free
+around that seam got proven the session before spending anything: health
+checks, missing and unresolvable engine addresses failing in under a second
+instead of hanging to a timeout, forged and malformed tokens rejected with a
+clean error instead of a crash. The plan named the one thing free testing
+structurally cannot produce — a positive auth control — and declined to
+fake it rather than dress up the negative case as proof of the positive one.
+
+Building the page in front of that seam surfaced a bug with nothing to do
+with tenancy: gunicorn's worker timeout defaults to 30 seconds, and the
+engine's own worst observed `/ask` latency is ~196 seconds. Nothing in five
+sessions of engine work had ever run a slow query through the Django process
+sitting in front of it, so nothing had ever hit this. Shipped as built, the
+failure would have looked like a frontend problem — a stuck request, a
+dropped connection — when the actual fault was a server config value nobody
+had ever needed to move off its default. It's the same shape as this turn's
+opening finding, an unpublished port invisible for five turns because
+nothing had ever asked it to be private: something silent that only breaks
+the first time a real requirement forces the path to run at its actual worst
+case, not a synthetic one. Found by asking what the timeout even was before
+building a UI on top of a call known to run long, not by watching it fail.
+Fixed at `--timeout 220`, clearing the client's own 210s ceiling — but the
+lesson is to check every implicit ceiling in a chain, not just the one just
+tuned, because whatever eventually sits in front of a genuinely slow call
+gets to have an opinion about how long is too long, whether or not it was
+consulted.
+
+One more bug came out of that same page, caught, not fixed. The refusal
+card — the UI's way of showing "no grounded answer" as success, not
+failure — is chosen by one line comparing the engine's answer against the
+canonical refusal sentence with exact string equality. That passed clean
+against a mocked response built to be exactly that sentence and nothing
+else, because a mock can only ever be exactly what it was written to be. It
+failed against a real refusal in the browser: the model led with the
+refusal sentence and then kept going, adding grounded figures after it, so
+the full answer's prefix matched but the full string did not. Equality was
+never going to survive contact with a model that's allowed to keep talking
+after it refuses — only a real, ungrounded question asked of a real model
+could have produced the input that broke that assumption, and no amount of
+mock design would have found it first. Left open on purpose, as the first
+item of the next session rather than a fix bolted onto the end of this one.
