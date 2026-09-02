@@ -60,6 +60,23 @@ separate, unbuilt concern; anything at the Postgres or Qdrant transport layer
 itself (no TLS, no per-service DB credentials yet); and multi-tenant
 isolation *within* a single user's own documents, which was never the ask.
 
+## Implementation note (T6.4) — canonical owner_id
+
+Django's user identity is an integer pk; the 285 points already in Qdrant
+carry `owner_id="alice"`, a username string. Canonical choice: **the
+username string**, not the pk.
+
+Reasons: the live payloads already match it — zero backfill, versus a
+forced rewrite of all 285 points for the pk option with no functional
+gain. The engine has no Django dependency and never will (it would
+violate point 3's "no new dependency" for the *engine's* image), so
+`owner_id` has no foreign-key relationship to `auth_user` to protect by
+using the pk — it is just an opaque string claim in a signed token
+either way. The only argument for pk (immunity to username rename) does
+not apply: this app has no username-change flow, and a rename via
+`/admin` is already out of scope per the threat model above (Django's
+own admin/superuser boundary is a separate, unbuilt concern).
+
 ## Consequence of point 4
 
 With the engine unreachable from the host, its liveness can no longer be
