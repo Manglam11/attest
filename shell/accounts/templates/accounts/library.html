@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Library — Attest{% endblock %}
+
+{% block content %}
+<h1>Library</h1>
+
+{% if documents %}
+<ul class="library-list">
+  {% for doc in documents %}
+  <li class="library-item">
+    <div class="library-item-header">
+      <span class="library-name">{{ doc.display_name }}</span>
+      <span class="status-badge status-{{ doc.status }}">{{ doc.get_status_display }}</span>
+    </div>
+    {% if doc.status == 'failed' %}
+    <p class="source-meta">{{ doc.failure_reason|default:"Failed — no reason recorded." }}</p>
+    {% else %}
+    <p class="source-meta">
+      {% if doc.page_count %}{{ doc.page_count }} page{{ doc.page_count|pluralize }}{% else %}page count unknown{% endif %} &middot;
+      {% if doc.chunk_count %}{{ doc.chunk_count }} chunk{{ doc.chunk_count|pluralize }}{% else %}0 chunks{% endif %} &middot;
+      {{ doc.figure_count|default:0 }} figure{{ doc.figure_count|default:0|pluralize }} &middot;
+      ingested {% if doc.ingested_at %}{{ doc.ingested_at|date:"Y-m-d" }}{% else %}date unknown{% endif %}
+    </p>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No documents yet.</p>
+{% endif %}
+{% endblock %}

@@ -10,7 +10,7 @@ from accounts.engine_client import (
     ask_engine,
 )
 from accounts.eval_artifacts import load_judged_run, summarise_for_dashboard
-from accounts.models import AskRecord
+from accounts.models import AskRecord, Document
 
 
 def signup(request):
@@ -76,6 +76,12 @@ def trust(request):
 
     context["recent_asks"] = AskRecord.objects.filter(user=request.user)[:20]
     return render(request, 'accounts/trust.html', context)
+
+
+@login_required
+def library(request):
+    documents = Document.objects.filter(user=request.user)
+    return render(request, 'accounts/library.html', {'documents': documents})
 
 
 @login_required

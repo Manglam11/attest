@@ -9,4 +9,5 @@ urlpatterns = [
     path('history/', views.history, name='history'),
     path('history/<int:pk>/', views.history_detail, name='history_detail'),
     path('trust/', views.trust, name='trust'),
+    path('library/', views.library, name='library'),
 ]
