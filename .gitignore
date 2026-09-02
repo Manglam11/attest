@@ -30,6 +30,7 @@ aapl_extracted.txt
 data/eval/*
 !data/eval/judged_*.json
 !data/eval/latency_samples.json
+!data/eval/retrieval_baseline_*.json
 
 # ---- Corpus: real filings, re-fetchable, never committed ----
 !data/corpus/
