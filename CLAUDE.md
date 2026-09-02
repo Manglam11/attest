@@ -13,14 +13,19 @@ The self-grading layer is the product, not decoration. Correctness before polish
    before it has been tested.
 2. **Report what you observed, not what you expect.** A status line, a "Started",
    a success message — none of these are evidence. Verify the actual value, inside
-   the container, on disk.
+   the container, on disk. Any number heading into a persisted document gets
+   re-derived at the point of writing, never carried forward from an earlier
+   session or message — even one stated confidently. A wrong number outlives its
+   own correction.
 3. **Anything metered gets resume + fail-fast from its first version.** Two API
-   keys, two separate ceilings. Never spend without stating the cost first and
-   waiting for a yes.
+   keys, two separate ceilings. Size a run on the worst single cost observed so
+   far, read from tracked evidence, never on an average. Never spend without
+   stating the cost first and waiting for a yes.
 4. **Count API calls, not units of work.** One RAGAS metric fires ~10 internal
    calls. Budgets are in calls.
-5. **Before any commit, reconcile `git status -s -uall`** — every file the work
-   touched, including config and ignore files. Nothing dangles.
+5. **Reconcile `git status -s -uall` at the start of a session and before any
+   commit** — every file the work touched, including config and ignore files.
+   Nothing dangles.
 6. **Before any destructive command, confirm it is not the only copy.** Backup
    first. The repo lives on an external SSD.
 7. **Read the file before diagnosing the tool.** A setting that "isn't taking" is
@@ -72,10 +77,8 @@ verbatim refusal sentence is a programmatic seam.
 
 ## Carried forward, past Turn 5
 
-- **Turn 2 retrieval-deepening pass** — fix the reranker's near-miss confusion
-  on financial tables (diagnosis above). Not started.
-- **p95 root cause** — not isolated. Latency work resumes with instrumentation
-  before any further sampling.
+- **Turn 2 retrieval-deepening pass** — diagnosis above. Not started.
+- **p95 root cause** — not isolated. Instrument before further sampling.
 
 ## Environment
 
@@ -96,7 +99,7 @@ verbatim refusal sentence is a programmatic seam.
 
 ## History
 
-`docs/blueprint.pdf` is what we build. `docs/sessions/` holds fifteen session logs —
+`docs/blueprint.pdf` is what we build. `docs/sessions/` holds sixteen session logs —
 read the newest first; each one supersedes older claims. `JOURNAL.md` is the
 per-turn record of real problems and concrete fixes.
 - **Resume paths re-validate cached fields; they do not replay them.** Three
