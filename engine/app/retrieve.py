@@ -11,7 +11,7 @@ from qdrant_client.models import (
 
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 SPARSE_MODEL = "Qdrant/bm25"
-RERANK_MODEL = "BAAI/bge-reranker-v2-m3"
+RERANK_MODEL = "BAAI/bge-reranker-base"
 QDRANT_HOST = "qdrant"
 QDRANT_PORT = 6333
 COLLECTION = "attest_chunks"
