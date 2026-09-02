@@ -46,7 +46,7 @@ def rerank(question: str, candidates: list[dict], top_k: int) -> list[dict]:
     pairs = [(question, c["text"]) for c in candidates]
     scores = _rerank_model.predict(pairs)
     ranked = sorted(zip(candidates, scores), key=lambda pair: pair[1], reverse=True)
-    return [c for c, _ in ranked[:top_k]]
+    return [{**c, "score": float(score)} for c, score in ranked[:top_k]]
 
 
 def owner_filter(owner_id: str, doc_id: str | None = None) -> Filter:
