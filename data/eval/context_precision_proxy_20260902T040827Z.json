@@ -1,0 +1,342 @@
+{
+  "measured_at": "2026-09-02T04:08:27.046397+00:00",
+  "query_source": "persisted agent tool_calls from run_20260831T101752Z.json, not re-derived live \u2014 re-deriving would invoke the metered agent key. Fidelity cost: these are the queries Gemini actually issued on 2026-08-31 under the current system prompt (unchanged since, confirmed via git log), not a fresh sample; the model is not deterministic, so a live re-ask could phrase differently.",
+  "ap_formula": "average precision; relevance = literal answer_key token present in the context (regex \\b\\d{1,3}(?:,\\d{3})*(?:\\.\\d+)?\\b), OR \u2014 for a gold row that declares operand_keys in gold_set.py \u2014 any one of those operand tokens present instead, since a derived answer_key never appears verbatim in the corpus and retrieval can only be held responsible for surfacing what it was computed from; weight = precision@k at each relevant rank; normalized by relevant-count within the returned set, not an external ground truth",
+  "validation": {
+    "n_rows": 12,
+    "n_matched": 11,
+    "n_mismatched": 1,
+    "mismatched_questions": [
+      "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?"
+    ],
+    "rows": [
+      {
+        "question": "What were Apple's total net sales for fiscal 2025?",
+        "judged_context_precision": 0.9999999999,
+        "reproduced_ap": 1.0,
+        "match": true
+      },
+      {
+        "question": "What was Apple's cost of sales in fiscal 2025?",
+        "judged_context_precision": 0.9999999999,
+        "reproduced_ap": 1.0,
+        "match": true
+      },
+      {
+        "question": "What was Apple's net income for fiscal 2025?",
+        "judged_context_precision": 0.94999999997625,
+        "reproduced_ap": 0.95,
+        "match": true
+      },
+      {
+        "question": "How much did Apple spend on research and development in fiscal 2025?",
+        "judged_context_precision": 0.5833333333041666,
+        "reproduced_ap": 0.5833333333333333,
+        "match": true
+      },
+      {
+        "question": "What was Apple's diluted earnings per share in fiscal 2025?",
+        "judged_context_precision": 0.9999999999666667,
+        "reproduced_ap": 1.0,
+        "match": true
+      },
+      {
+        "question": "How many diluted shares did Apple use to compute earnings per share in fiscal 2025?",
+        "judged_context_precision": 0.99999999995,
+        "reproduced_ap": 1.0,
+        "match": true
+      },
+      {
+        "question": "What were Apple's total assets as of the end of fiscal 2025?",
+        "judged_context_precision": 0.3333333333,
+        "reproduced_ap": 0.3333333333333333,
+        "match": true
+      },
+      {
+        "question": "What was Apple's operating income for fiscal 2025?",
+        "judged_context_precision": 0.49999999995,
+        "reproduced_ap": 0.5,
+        "match": true
+      },
+      {
+        "question": "What was the total of Apple's cash, cash equivalents, and marketable securities at the end of fiscal 2025?",
+        "judged_context_precision": 0.49999999998333333,
+        "reproduced_ap": 0.5,
+        "match": true
+      },
+      {
+        "question": "In the five-year stock performance graph, what was the ending value of a $100 investment in Apple common stock as of September 2025?",
+        "judged_context_precision": 0.99999999995,
+        "reproduced_ap": 1.0,
+        "match": true
+      },
+      {
+        "question": "What base amount was assumed invested in the stock performance comparison graph as of September 2020?",
+        "judged_context_precision": 0.8333333332916666,
+        "reproduced_ap": 0.8333333333333333,
+        "match": true
+      },
+      {
+        "question": "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?",
+        "judged_context_precision": 0.5888888888692593,
+        "reproduced_ap": 0.6791666666666667,
+        "match": false
+      }
+    ]
+  },
+  "self_test": {
+    "zero_relevant_case": 0.0,
+    "expected_zero": 0.0,
+    "single_hit_rank1_case": 1.0,
+    "expected_one": 1.0,
+    "known_pattern_case": 0.75,
+    "expected_known_pattern": 0.75,
+    "derived_no_fallback_to_literal_answer_key": true,
+    "derived_finds_declared_operand": true,
+    "derived_ignores_unrelated_number": true,
+    "non_derived_rows_unaffected": true,
+    "passed": true
+  },
+  "rows": [
+    {
+      "question": "What were Apple's total net sales for fiscal 2025?",
+      "answer_key": "416,161",
+      "operand_keys": null,
+      "queries_used": [
+        "What were Apple's total net sales for fiscal 2025?"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        true,
+        true,
+        false,
+        true,
+        true
+      ],
+      "proxy_context_precision": 0.8875,
+      "judged_context_precision_for_reference": 0.9999999999
+    },
+    {
+      "question": "What was Apple's cost of sales in fiscal 2025?",
+      "answer_key": "220,960",
+      "operand_keys": null,
+      "queries_used": [
+        "Apple cost of sales fiscal year 2025"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "proxy_context_precision": 1.0,
+      "judged_context_precision_for_reference": 0.9999999999
+    },
+    {
+      "question": "What was Apple's net income for fiscal 2025?",
+      "answer_key": "112,010",
+      "operand_keys": null,
+      "queries_used": [
+        "Apple net income fiscal 2025 Consolidated Statements of Operations"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "proxy_context_precision": 1.0,
+      "judged_context_precision_for_reference": 0.94999999997625
+    },
+    {
+      "question": "How much did Apple spend on research and development in fiscal 2025?",
+      "answer_key": "34,550",
+      "operand_keys": null,
+      "queries_used": [
+        "research and development expense fiscal 2025"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        false,
+        true,
+        true,
+        false,
+        false
+      ],
+      "proxy_context_precision": 0.5833333333333333,
+      "judged_context_precision_for_reference": 0.5833333333041666
+    },
+    {
+      "question": "What was Apple's diluted earnings per share in fiscal 2025?",
+      "answer_key": "7.46",
+      "operand_keys": null,
+      "queries_used": [
+        "diluted earnings per share fiscal 2025"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "proxy_context_precision": 1.0,
+      "judged_context_precision_for_reference": 0.9999999999666667
+    },
+    {
+      "question": "How many diluted shares did Apple use to compute earnings per share in fiscal 2025?",
+      "answer_key": "15,004,697",
+      "operand_keys": null,
+      "queries_used": [
+        "diluted shares earnings per share fiscal 2025 2024"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "proxy_context_precision": 1.0,
+      "judged_context_precision_for_reference": 0.99999999995
+    },
+    {
+      "question": "What were Apple's total assets as of the end of fiscal 2025?",
+      "answer_key": "359,241",
+      "operand_keys": null,
+      "queries_used": [
+        "What were Apple's total assets as of the end of fiscal 2025?"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "proxy_context_precision": 1.0,
+      "judged_context_precision_for_reference": 0.3333333333
+    },
+    {
+      "question": "What was Apple's operating income for fiscal 2025?",
+      "answer_key": "133,050",
+      "operand_keys": null,
+      "queries_used": [
+        "operating income fiscal 2025"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        false,
+        false,
+        true,
+        false,
+        false
+      ],
+      "proxy_context_precision": 0.3333333333333333,
+      "judged_context_precision_for_reference": 0.49999999995
+    },
+    {
+      "question": "What was the total of Apple's cash, cash equivalents, and marketable securities at the end of fiscal 2025?",
+      "answer_key": "132.4",
+      "operand_keys": null,
+      "queries_used": [
+        "cash cash equivalents marketable securities fiscal 2025 end total",
+        "Note 4 Financial Instruments table total Fair Value 2025"
+      ],
+      "n_queries": 2,
+      "n_contexts": 8,
+      "relevance_flags": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "proxy_context_precision": 0.0,
+      "judged_context_precision_for_reference": 0.49999999998333333
+    },
+    {
+      "question": "In the five-year stock performance graph, what was the ending value of a $100 investment in Apple common stock as of September 2025?",
+      "answer_key": "234",
+      "operand_keys": null,
+      "queries_used": [
+        "five-year stock performance graph Apple $100 investment September 2025"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "proxy_context_precision": 1.0,
+      "judged_context_precision_for_reference": 0.99999999995
+    },
+    {
+      "question": "What base amount was assumed invested in the stock performance comparison graph as of September 2020?",
+      "answer_key": "100",
+      "operand_keys": null,
+      "queries_used": [
+        "stock performance comparison graph September 2020 base amount invested $100"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "proxy_context_precision": 1.0,
+      "judged_context_precision_for_reference": 0.8333333332916666
+    },
+    {
+      "question": "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?",
+      "answer_key": "381,611",
+      "operand_keys": [
+        "416,161",
+        "34,550"
+      ],
+      "queries_used": [
+        "total net sales research and development spend fiscal 2025"
+      ],
+      "n_queries": 1,
+      "n_contexts": 5,
+      "relevance_flags": [
+        false,
+        true,
+        true,
+        true,
+        false
+      ],
+      "proxy_context_precision": 0.6388888888888888,
+      "judged_context_precision_for_reference": 0.5888888888692593
+    }
+  ],
+  "summary": {
+    "n_rows": 12,
+    "proxy_mean": 0.7869212962962963,
+    "judged_mean_of_record": 0.7740740740284452
+  }
+}
