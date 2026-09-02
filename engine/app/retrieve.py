@@ -7,6 +7,9 @@ from qdrant_client.models import (
     FusionQuery,
     Fusion,
     NamedVector,
+    Filter,
+    FieldCondition,
+    MatchValue,
 )
 
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
@@ -38,22 +41,30 @@ def embed_question_sparse(question: str) -> SparseVector:
 
 
 def rerank(question: str, candidates: list[dict], top_k: int) -> list[dict]:
+    if not candidates:
+        return []
     pairs = [(question, c["text"]) for c in candidates]
     scores = _rerank_model.predict(pairs)
     ranked = sorted(zip(candidates, scores), key=lambda pair: pair[1], reverse=True)
     return [c for c, _ in ranked[:top_k]]
 
 
-def search(question: str, top_k: int = TOP_K) -> list[dict]:
+def owner_filter(owner_id: str) -> Filter:
+    return Filter(must=[FieldCondition(key="owner_id", match=MatchValue(value=owner_id))])
+
+
+def search(question: str, owner_id: str, top_k: int = TOP_K) -> list[dict]:
     dense = embed_question_dense(question)
     sparse = embed_question_sparse(question)
+    query_filter = owner_filter(owner_id)
     hits = _client.query_points(
         collection_name=COLLECTION,
         prefetch=[
-            Prefetch(query=dense, using=DENSE_NAME, limit=PREFETCH),
-            Prefetch(query=sparse, using=SPARSE_NAME, limit=PREFETCH),
+            Prefetch(query=dense, using=DENSE_NAME, limit=PREFETCH, filter=query_filter),
+            Prefetch(query=sparse, using=SPARSE_NAME, limit=PREFETCH, filter=query_filter),
         ],
         query=FusionQuery(fusion=Fusion.RRF),
+        query_filter=query_filter,
         limit=RERANK_POOL,
     ).points
     candidates = [
@@ -62,13 +73,13 @@ def search(question: str, top_k: int = TOP_K) -> list[dict]:
     return rerank(question, candidates, top_k)
 
 
-def retrieve(question: str, top_k: int = TOP_K) -> list[dict]:
-    return search(question, top_k)
+def retrieve(question: str, owner_id: str, top_k: int = TOP_K) -> list[dict]:
+    return search(question, owner_id, top_k)
 
 
 if __name__ == "__main__":
     question = "How much did Apple spend on research and development?"
-    chunks = retrieve(question)
+    chunks = retrieve(question, "alice")
     print(f"Retrieved {len(chunks)} chunks for: {question!r}\n")
     for i, chunk in enumerate(chunks, 1):
         marker = "  <-- 31,370 HERE" if "31,370" in chunk["text"] else ""
