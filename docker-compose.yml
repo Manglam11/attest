@@ -63,6 +63,7 @@ services:
         condition: service_healthy
     volumes:
       - ./shell:/code
+      - ./data/eval:/code/data/eval:ro
 
   eval:
     build:
