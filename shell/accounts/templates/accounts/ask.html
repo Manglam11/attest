@@ -59,11 +59,14 @@
     <p>Latency: {{ result.latency_s }}s</p>
   </div>
 
-  {% if result.contexts %}
-  <details class="card">
-    <summary>Retrieved passages ({{ result.contexts|length }})</summary>
-    {% for chunk in result.contexts %}
-    <pre>{{ chunk }}</pre>
+  {% if result.sources %}
+  <details class="card" open>
+    <summary>Sources ({{ result.sources|length }})</summary>
+    {% for source in result.sources %}
+    <div class="source-card">
+      <p class="source-meta"><strong>{{ source.doc_id }}</strong> — page {{ source.page }} · score {{ source.score|floatformat:3 }}</p>
+      <pre>{{ source.text }}</pre>
+    </div>
     {% endfor %}
   </details>
   {% endif %}
