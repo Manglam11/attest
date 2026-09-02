@@ -14,6 +14,7 @@ OUTPUT_DIR = Path(os.environ.get("EVAL_DIR", "/code/data/eval"))
 NUMBER_TOKEN = re.compile(r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b")
 
 ANSWERABLE = [item for item in GOLD_SET if item["answer_key"] != "UNANSWERABLE"]
+OPERAND_KEYS_BY_QUESTION = {item["question"]: item.get("operand_keys") for item in GOLD_SET}
 
 
 def average_precision(relevance_flags: list[bool]) -> float:
@@ -34,8 +35,23 @@ def average_precision(relevance_flags: list[bool]) -> float:
     return total / n_relevant
 
 
-def is_relevant(answer_key: str, context: str) -> bool:
-    return answer_key in NUMBER_TOKEN.findall(context)
+def is_relevant(context: str, answer_key: str, operand_keys: list[str] | None = None) -> bool:
+    """General rule: retrieval can only be held responsible for surfacing
+    the literal values an answer is built from. Most gold rows' answer_key
+    IS that value. A derived row (gold_set.py's operand_keys field) instead
+    declares the operands its computed answer_key is built from, since the
+    result of arithmetic no chunk performs will never appear verbatim in
+    the corpus — checking for it would always score 0 regardless of what
+    retrieval actually found. When operand_keys is present, a context
+    counts as relevant if it carries ANY one of the operands: a chunk
+    supplying half of what's needed is still doing retrieval's job, even
+    if the other operand comes from elsewhere in the returned set. This
+    branch applies to any row that declares operand_keys, not just the
+    one that does today."""
+    tokens = NUMBER_TOKEN.findall(context)
+    if operand_keys:
+        return any(op in tokens for op in operand_keys)
+    return answer_key in tokens
 
 
 def validate_against_judged() -> dict:
@@ -53,8 +69,9 @@ def validate_against_judged() -> dict:
             continue
         question = jr["question"]
         answer_key = jr["answer_key"]
+        operand_keys = OPERAND_KEYS_BY_QUESTION.get(question)
         contexts = run_by_q[question]["contexts"]
-        flags = [is_relevant(answer_key, c) for c in contexts]
+        flags = [is_relevant(c, answer_key, operand_keys) for c in contexts]
         reproduced = average_precision(flags)
         judged_cp = jr["scores"]["context_precision"]
         rows.append(
@@ -86,10 +103,27 @@ def self_test() -> dict:
     perfect_case = average_precision([True, False, False])
     known_case = average_precision([True, False, False, True])  # matches "net income"-style pattern: rel@1, rel@4
     expected_known = (1 / 1 + 2 / 4) / 2
+
+    # A broken derived-value check would look like: falling back to
+    # literal answer_key matching even when operand_keys is given (in
+    # which case a derived answer never present in the corpus scores every
+    # context False and the row goes to 0.0 exactly as before this fix —
+    # the bug this fix is for), or matching on ANY number rather than the
+    # declared operands (in which case an unrelated figure would count).
+    # Both are asserted against directly.
+    derived_no_fallback = is_relevant("[page 1] net sales were 381,611 higher", "381,611", ["416,161", "34,550"]) is False
+    derived_finds_operand = is_relevant("[page 33] Net sales 416,161 total", "381,611", ["416,161", "34,550"]) is True
+    derived_ignores_unrelated_number = is_relevant("[page 9] the fiscal year 2025 covers 366 days", "381,611", ["416,161", "34,550"]) is False
+    non_derived_unaffected = is_relevant("[page 33] Net income 112,010", "112,010", None) is True
+
     passed = (
         zero_case == 0.0
         and perfect_case == 1.0
         and abs(known_case - expected_known) < 1e-9
+        and derived_no_fallback
+        and derived_finds_operand
+        and derived_ignores_unrelated_number
+        and non_derived_unaffected
     )
     return {
         "zero_relevant_case": zero_case,
@@ -98,6 +132,10 @@ def self_test() -> dict:
         "expected_one": 1.0,
         "known_pattern_case": known_case,
         "expected_known_pattern": expected_known,
+        "derived_no_fallback_to_literal_answer_key": derived_no_fallback,
+        "derived_finds_declared_operand": derived_finds_operand,
+        "derived_ignores_unrelated_number": derived_ignores_unrelated_number,
+        "non_derived_rows_unaffected": non_derived_unaffected,
         "passed": passed,
     }
 
@@ -136,15 +174,17 @@ def score_agent_queries() -> list[dict]:
     for item in ANSWERABLE:
         question = item["question"]
         answer_key = item["answer_key"]
+        operand_keys = item.get("operand_keys")
         queries = agent_queries_for(question, run_by_q)
         contexts = collect_agent_contexts(queries)
-        flags = [is_relevant(answer_key, c) for c in contexts]
+        flags = [is_relevant(c, answer_key, operand_keys) for c in contexts]
         score = average_precision(flags)
         judged_cp = judged_by_q[question]["scores"]["context_precision"]
         rows.append(
             {
                 "question": question,
                 "answer_key": answer_key,
+                "operand_keys": operand_keys,
                 "queries_used": queries,
                 "n_queries": len(queries),
                 "n_contexts": len(contexts),
@@ -192,9 +232,12 @@ def main():
         ),
         "ap_formula": (
             "average precision; relevance = literal answer_key token present in the context "
-            "(regex \\b\\d{1,3}(?:,\\d{3})*(?:\\.\\d+)?\\b); weight = precision@k at each "
-            "relevant rank; normalized by relevant-count within the returned set, not an "
-            "external ground truth"
+            "(regex \\b\\d{1,3}(?:,\\d{3})*(?:\\.\\d+)?\\b), OR — for a gold row that declares "
+            "operand_keys in gold_set.py — any one of those operand tokens present instead, "
+            "since a derived answer_key never appears verbatim in the corpus and retrieval "
+            "can only be held responsible for surfacing what it was computed from; weight = "
+            "precision@k at each relevant rank; normalized by relevant-count within the "
+            "returned set, not an external ground truth"
         ),
         "validation": validation,
         "self_test": st,
