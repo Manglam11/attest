@@ -326,3 +326,24 @@ element it styled, present on every page regardless of what the page
 actually rendered. A check that always passes regardless of the code under
 test is not a check — it is decoration, the exact failure mode this
 dashboard exists to catch in the product itself.
+
+A demo-prep session, running the exact question T6.16 had already proven at
+14.1s, hit a shape of failure tenancy work hadn't: the engine finished the
+ask — correctly, 251.648s later, its own log says so — and the shell had
+already given up 41.6 seconds earlier and told Postgres the call was
+unreachable. The client's 210s timeout wasn't wrong when it was set; its own
+comment says it was sized to clear the worst case then on record, 196s, with
+margin. It just isn't the worst case anymore, and nothing about a timeout
+constant announces that it's aged out — the number sits there passing every
+ask that happens to finish faster, until one doesn't. Diagnosing it meant not
+assuming the whole 251.648s was ours to fix: three existing log timestamps
+(the two Gemini call completions and the retrieval/rerank window between
+them) split it into 96.93s + 7.81s + 146.91s with no new instrumentation,
+and a seven-run isolated timing from Session 20's reverted-reranker
+experiment confirmed 7.81s was an ordinary retrieval+rerank call, not a
+regression. 243.84 of 251.648 seconds — 96.9% — was two round-trips to the
+model provider, a cost this stack doesn't control and didn't cause. The fix
+isn't in this entry: raising the shell's timeout without knowing whether
+today's outlier was host contention or the provider itself just trades one
+unexamined number for another. What's fixed is the shape of the next
+decision — it now has a real split instead of a single unexplained duration.
