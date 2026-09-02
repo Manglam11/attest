@@ -31,11 +31,15 @@ services:
       - ./data/quota:/code/data/quota
       - hf_cache:/root/.cache/huggingface
     container_name: attest_engine
-    ports:
-      - "8000:8000"
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - ENGINE_URL=http://engine:8000
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
       postgres:
         condition: service_healthy
