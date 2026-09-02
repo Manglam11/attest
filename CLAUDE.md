@@ -121,6 +121,44 @@ verbatim refusal sentence is a programmatic seam.
   Google's own free-tier state — the two can disagree. Resolving this needs
   either the quota window to roll over or a paid tier, and either way the
   cost gets stated and confirmed before spending, per rule 3.
+  **Superseded (Session 20, T6.15/T6.16):** the live call has now happened —
+  twice, through the browser — one refusal and one grounded answer, both
+  verified in Postgres. The counter/free-tier-divergence risk stated above
+  is still real and unresolved in general, just no longer blocking this
+  specific proof.
+- **Ingest cannot run from Django, and has never been timed end to end** —
+  `engine/app/ingest.py:171`'s `ingest(pdf_path, owner_id, doc_id)` is a
+  clean importable function, but its ML dependencies (pymupdf,
+  sentence-transformers, fastembed) live only in the engine image, not the
+  shell's; and `data/corpus` is mounted `:ro` into the engine, so nothing
+  can write an uploaded file there today either. A real phase-timed ingest
+  of the 65-page `aapl_10k.pdf` (Session 20, T6.18b) measured 44.7s total:
+  PDF extraction 0.32s, chunking 0.01s, figure/vision (1 figure) 12.99s,
+  dense model load 5.32s, dense embed compute 25.32s, sparse model load
+  0.39s, sparse embed compute 0.11s, Qdrant upsert 0.26s. Model-load tax
+  (dense+sparse load, not compute) is 5.71s of that, 12.8% — fixable by
+  caching the models once like `retrieve.py` already does instead of
+  reloading them inside `embed_chunks`/`embed_chunks_sparse` on every call;
+  not fixed here. This is a single 65-page/1-figure sample, not a rate —
+  a larger or more figure-heavy filing is not bounded by this number,
+  especially since vision was the largest single non-embedding phase and
+  scales with figure count, not page count. Upload's execution model
+  (sync/background/deferred) is not decided; it was deferred to the next
+  session pending exactly this data.
+- **`ingest.py`'s vision call spends `GEMINI_API_KEY` untracked** — found
+  while timing the ingest above. `QuotaCounterCallback` (`quota.py`) only
+  hooks `on_chat_model_start` on the langchain agent's model, wired in
+  `agent.py:89`; `ingest.py:88`'s `client.models.generate_content(...)` is a
+  direct `genai.Client` call with no callback attached, so every figure
+  vision call since the multimodal pipeline landed (Session 08) has been
+  invisible to `data/quota/agent_calls.json`. Scope, checked locally with no
+  API spend: the current corpus has exactly one qualifying figure (>=200px,
+  `aapl_10k.pdf` page 24) — a full re-ingest of everything today spends
+  exactly 1 untracked call. A hypothetical uploaded 96-page filing with 20
+  figures would spend ~20 untracked calls, uncounted and uncapped. This is a
+  blocking input to the upload design, not a footnote: a user-facing upload
+  button must not make an unbounded, uncounted number of paid calls per
+  file. Not fixed here — reported per the instruction that found it.
 
 ## Environment
 
