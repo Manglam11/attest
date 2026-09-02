@@ -39,6 +39,15 @@
   .source-card { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee; }
   .source-card:first-of-type { margin-top: 0.5rem; border-top: none; padding-top: 0; }
   .source-meta { font-size: 0.85rem; color: #555; margin: 0 0 0.35rem; }
+  .history-list { list-style: none; padding: 0; }
+  .history-list li a {
+    display: block; padding: 0.9rem 1.1rem; margin-top: 0.75rem;
+    border: 1px solid #ddd; border-radius: 6px; background: #fff;
+    text-decoration: none; color: inherit;
+  }
+  .history-list li a:hover { border-color: #999; }
+  .history-question { display: block; font-weight: 600; }
+  .history-meta { display: block; margin-top: 0.3rem; font-size: 0.85rem; color: #666; }
 </style>
 </head>
 <body>
@@ -46,6 +55,7 @@
   <a class="brand" href="{% url 'home' %}">Attest</a>
   {% if user.is_authenticated %}
     <a href="{% url 'ask' %}">Ask</a>
+    <a href="{% url 'history' %}">History</a>
     <span class="spacer"></span>
     <span>{{ user.username }}</span>
     <form method="post" action="{% url 'logout' %}">

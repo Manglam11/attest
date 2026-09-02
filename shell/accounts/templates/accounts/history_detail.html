@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}{{ record.question|truncatechars:40 }} — Attest{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'history' %}">&larr; History</a></p>
+<h1>{{ record.question }}</h1>
+<p class="source-meta">Asked {{ record.created_at|date:"Y-m-d H:i" }}</p>
+
+{% include "accounts/_result.html" %}
+{% endblock %}

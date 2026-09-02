@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}History — Attest{% endblock %}
+
+{% block content %}
+<h1>History</h1>
+
+{% if records %}
+<ul class="history-list">
+  {% for record in records %}
+  <li>
+    <a href="{% url 'history_detail' record.pk %}">
+      <span class="history-question">{{ record.question|truncatechars:80 }}</span>
+      <span class="history-meta">
+        {{ record.created_at|date:"Y-m-d H:i" }} ·
+        {% if record.error %}errored{% elif record.refused %}refused{% else %}answered{% endif %} ·
+        {% if record.latency_s %}{{ record.latency_s }}s{% else %}—{% endif %} ·
+        {{ record.sources|length }} source{{ record.sources|length|pluralize }}
+      </span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No questions asked yet. <a href="{% url 'ask' %}">Ask one</a>.</p>
+{% endif %}
+{% endblock %}

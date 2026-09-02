@@ -1,7 +1,7 @@
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from accounts.engine_client import (
     EngineAuthError,
@@ -58,3 +58,25 @@ def ask(request):
                 record.tool_calls = result.get('tool_calls') or []
             record.save()
     return render(request, 'accounts/ask.html', context)
+
+
+@login_required
+def history(request):
+    records = AskRecord.objects.filter(user=request.user)
+    return render(request, 'accounts/history.html', {'records': records})
+
+
+@login_required
+def history_detail(request, pk):
+    record = get_object_or_404(AskRecord, pk=pk, user=request.user)
+    return render(
+        request,
+        'accounts/history_detail.html',
+        {
+            'record': record,
+            'result': record,
+            'refused': record.refused,
+            'error': record.error,
+            'error_detail': record.error_detail,
+        },
+    )
