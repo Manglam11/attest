@@ -31,6 +31,7 @@ data/eval/*
 !data/eval/judged_*.json
 !data/eval/latency_samples.json
 !data/eval/retrieval_baseline_*.json
+!data/eval/context_precision_proxy_*.json
 
 # ---- Corpus: real filings, re-fetchable, never committed ----
 !data/corpus/
