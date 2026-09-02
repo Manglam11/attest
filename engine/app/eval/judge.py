@@ -16,10 +16,11 @@ from ragas.metrics.collections import (
     Faithfulness,
 )
 
+from app.refusal import is_refusal
+
 EVAL_DIR = Path(os.getenv("EVAL_DIR", "/code/data/eval"))
 JUDGE_MODEL = "gemini-3.5-flash-lite"
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
-REFUSAL = "I cannot answer this from the provided sources"
 PACE_S = float(os.getenv("JUDGE_PACE_S", "45"))
 TARGETS = {
     "faithfulness": 0.90,
@@ -175,7 +176,7 @@ async def main(limit):
             "question": q,
             "answer_key": row["answer_key"],
             "answer": row["answer"],
-            "refused": REFUSAL.lower() in (row["answer"] or "").lower(),
+            "refused": is_refusal(row["answer"]),
             "scores": None,
             "embed_model": None,
             "error": None,
@@ -241,7 +242,7 @@ async def main(limit):
                         "question": rq,
                         "answer_key": r["answer_key"],
                         "answer": r["answer"],
-                        "refused": REFUSAL.lower() in (r["answer"] or "").lower(),
+                        "refused": is_refusal(r["answer"]),
                         "scores": None,
                         "embed_model": None,
                         "error": "not attempted",
