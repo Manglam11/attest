@@ -49,14 +49,22 @@ def rerank(question: str, candidates: list[dict], top_k: int) -> list[dict]:
     return [c for c, _ in ranked[:top_k]]
 
 
-def owner_filter(owner_id: str) -> Filter:
-    return Filter(must=[FieldCondition(key="owner_id", match=MatchValue(value=owner_id))])
+def owner_filter(owner_id: str, doc_id: str | None = None) -> Filter:
+    # owner_id is always required and always comes from the verified token,
+    # never from the caller — doc_id, if given, narrows within that owner's
+    # own corpus, it can never widen past it.
+    conditions = [FieldCondition(key="owner_id", match=MatchValue(value=owner_id))]
+    if doc_id is not None:
+        conditions.append(FieldCondition(key="doc_id", match=MatchValue(value=doc_id)))
+    return Filter(must=conditions)
 
 
-def search(question: str, owner_id: str, top_k: int = TOP_K) -> list[dict]:
+def search(
+    question: str, owner_id: str, doc_id: str | None = None, top_k: int = TOP_K
+) -> list[dict]:
     dense = embed_question_dense(question)
     sparse = embed_question_sparse(question)
-    query_filter = owner_filter(owner_id)
+    query_filter = owner_filter(owner_id, doc_id)
     hits = _client.query_points(
         collection_name=COLLECTION,
         prefetch=[
@@ -68,13 +76,21 @@ def search(question: str, owner_id: str, top_k: int = TOP_K) -> list[dict]:
         limit=RERANK_POOL,
     ).points
     candidates = [
-        {"text": hit.payload["text"], "page": hit.payload["page"]} for hit in hits
+        {
+            "text": hit.payload["text"],
+            "page": hit.payload["page"],
+            "doc_id": hit.payload["doc_id"],
+            "owner_id": hit.payload["owner_id"],
+        }
+        for hit in hits
     ]
     return rerank(question, candidates, top_k)
 
 
-def retrieve(question: str, owner_id: str, top_k: int = TOP_K) -> list[dict]:
-    return search(question, owner_id, top_k)
+def retrieve(
+    question: str, owner_id: str, doc_id: str | None = None, top_k: int = TOP_K
+) -> list[dict]:
+    return search(question, owner_id, doc_id, top_k)
 
 
 if __name__ == "__main__":
