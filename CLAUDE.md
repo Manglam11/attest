@@ -96,6 +96,7 @@ verbatim refusal sentence is a programmatic seam.
 - **p95 root cause** — not isolated. Instrument before further sampling.
   Retrieval is not the lever at the deployed reranker: 4.7–13.2% of
   observed ask latency, warm (`data/eval/retrieval_timing_20260902T012156Z.json`).
+- **Judge key has no counter or ceiling** — unlike the agent key, `JUDGE_API_KEY` is protected only by fail-fast-and-resume on 429; not building one in Turn 6, which spends nothing metered.
 
 ## Environment
 
@@ -105,9 +106,9 @@ verbatim refusal sentence is a programmatic seam.
   `attest_qdrant` (:6333) · `attest_postgres` (:5432) · `eval` (profile-gated,
   isolated image).
 - Eval runs: `docker compose --profile eval run --rm -T eval python -m app.eval.<mod>`
-- Two keys, two ceilings: `GEMINI_API_KEY` → agent (`gemini-3.6-flash`, ~20 RPD,
-  the binding constraint) · `JUDGE_API_KEY` → judge (`gemini-3.5-flash-lite`).
-  Secrets are passed per-key in compose; nothing inherits.
+- One ceiling, not two: `GEMINI_API_KEY` → agent (`gemini-3.6-flash`, ~20 RPD) has a
+  persisted counter+ceiling; `JUDGE_API_KEY` → judge (`gemini-3.5-flash-lite`) has
+  neither — only fail-fast-and-resume on 429. Secrets per-key; nothing inherits.
 - Eval artifacts in `data/eval/`. `run_*.json` ignored; `judged_*.json` and
   `latency_samples.json` tracked.
 - Pins that are workarounds, not preferences: `ragas 0.4.3`,
