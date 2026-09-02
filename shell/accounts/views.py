@@ -9,12 +9,7 @@ from accounts.engine_client import (
     EngineUnreachable,
     ask_engine,
 )
-
-# Duplicated from engine/app/agent.py's SYSTEM_PROMPT — the two live in
-# separate containers with no shared package, and the eval judge already
-# carries its own copy (engine/app/eval/judge.py). A refusal is a correct
-# answer, not an error, so the UI needs to recognize it by exact text.
-REFUSAL_TEXT = "I cannot answer this from the provided sources."
+from accounts.models import AskRecord
 
 
 def signup(request):
@@ -41,18 +36,25 @@ def ask(request):
         question = request.POST.get('question', '').strip()
         context['question'] = question
         if question:
+            record = AskRecord(user=request.user, question=question)
             try:
                 result = ask_engine(request.user, question)
             except EngineUnreachable as exc:
-                context['error'] = 'unreachable'
-                context['error_detail'] = str(exc)
+                context['error'] = record.error = 'unreachable'
+                context['error_detail'] = record.error_detail = str(exc)
             except EngineAuthError as exc:
-                context['error'] = 'auth'
-                context['error_detail'] = str(exc)
+                context['error'] = record.error = 'auth'
+                context['error_detail'] = record.error_detail = str(exc)
             except EngineResponseError as exc:
-                context['error'] = 'response'
-                context['error_detail'] = str(exc)
+                context['error'] = record.error = 'response'
+                context['error_detail'] = record.error_detail = str(exc)
             else:
                 context['result'] = result
-                context['refused'] = result['answer'].strip() == REFUSAL_TEXT
+                context['refused'] = result['refused']
+                record.answer = result['answer']
+                record.refused = result['refused']
+                record.latency_s = result.get('latency_s')
+                record.sources = result.get('sources') or []
+                record.tool_calls = result.get('tool_calls') or []
+            record.save()
     return render(request, 'accounts/ask.html', context)
