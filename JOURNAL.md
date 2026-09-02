@@ -269,3 +269,60 @@ after it refuses — only a real, ungrounded question asked of a real model
 could have produced the input that broke that assumption, and no amount of
 mock design would have found it first. Left open on purpose, as the first
 item of the next session rather than a fix bolted onto the end of this one.
+
+That bug recurred this session, in a different shape. This time the model
+didn't lead with the refusal sentence and keep going — it gave three years
+of grounded net-sales figures first and *ended* with the refusal, wrapped
+in markdown bold. Exact-string equality would have failed on this input
+too, for a different reason than the one already diagnosed: proof the fix
+was never about matching one observed shape, it was about giving up on
+matching text at all. The sentence existed in three drifted copies by the
+time I went looking — the agent's own system prompt (unenforced, just an
+instruction to the model), the judge's constant (already substring-matched,
+already correct), and the shell's (exact equality, the bug). Collapsed to
+one module the engine imports; the engine now reports `refused` as an
+explicit boolean on the response instead of asking every consumer to
+reverse-engineer intent from prose. The shell holds zero copies of that
+sentence today, provably, by grep, not assertion.
+
+Adding that field, plus per-source `doc_id`, `owner_id`, `page`, and
+reranker `score`, meant changing what `/ask` returns — into a shape the
+Turn 5 eval harness and judge already consume as `list[str]` and feed
+straight into RAGAS, whose own contexts type is `list[str]`, not dicts.
+Reshaping `contexts` would have made the next §02 run silently
+non-comparable with the frozen one, or crashed inside RAGAS's own
+validation the first time the harness ran against the changed engine. The
+fix wasn't a compromise, it was two fields: `contexts` stays byte-for-byte
+what it always was; a new `sources` field carries the structure the
+product actually needs. One is a strict superset of the other's
+information, so they cannot drift apart silently, and the frozen
+measurement path needed zero edits.
+
+Timing a real ingest to answer an unrelated question — whether upload could
+run synchronously inside a request — surfaced a defect that had nothing to
+do with timing. `ingest.py`'s figure-vision call is a direct
+`genai.Client(...).generate_content()`, not routed through the langchain
+agent the quota counter's callback is attached to. Every figure described
+since the multimodal pipeline landed in Turn 3 has spent against the same
+Gemini key the counter is supposed to be tracking, invisibly. The corpus
+today has exactly one qualifying figure, so the damage so far is one
+untracked call — but a 96-page filing with twenty figures would spend
+twenty, uncapped and uncounted, the moment upload ships. Found by asking
+what dominated an ingest's cost, not by looking for it.
+
+The sharpest bug of the session was in a test, not the product. The trust
+dashboard's missing-artifact path is supposed to degrade to a stated reason
+instead of crashing or showing invented zeros. Verifying it meant patching
+the module-level path constant to something nonexistent — except the
+loader function's default parameter had been bound to that constant at
+*definition* time, so the patch changed the module attribute and left the
+already-compiled default exactly where it was. The test asserted, passed,
+and proved nothing: the artifact was loading from the real path the whole
+time, missing-artifact or not. A default argument is evaluated once, at
+`def`, not on every call — the same trap as a mutable default, wearing a
+different disguise. Same session, three separate assertions elsewhere
+matched a CSS class *definition* inside a `<style>` block rather than the
+element it styled, present on every page regardless of what the page
+actually rendered. A check that always passes regardless of the code under
+test is not a check — it is decoration, the exact failure mode this
+dashboard exists to catch in the product itself.
