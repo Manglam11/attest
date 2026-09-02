@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Trust — Attest{% endblock %}
+
+{% block content %}
+<h1>Trust dashboard</h1>
+
+{% if artifact_error %}
+<div class="card error">
+  <strong>Evaluation data unavailable.</strong>
+  <p>{{ artifact_error }}</p>
+</div>
+{% else %}
+<p class="source-meta">
+  Frozen evaluation over a fixed {{ n_gold_questions }}-question gold set, judged
+  {{ judged_at|date:"Y-m-d H:i" }} ({{ run }}, judge model {{ judge_model }}). These
+  numbers do not move when you ask a question below — see "Your recent asks" for that.
+</p>
+
+<div class="tile-row">
+  {% for tile in tiles %}
+  <div class="tile {% if tile.passed %}tile-pass{% else %}tile-fail{% endif %}">
+    <div class="tile-label">{{ tile.label }}</div>
+    <div class="tile-value">{{ tile.value|floatformat:3 }}</div>
+    <div class="tile-target">target {{ tile.comparator }} {{ tile.target|floatformat:2 }} &middot; n={{ tile.n }}</div>
+    <div class="tile-verdict">{% if tile.passed %}PASS{% else %}FAIL{% endif %}</div>
+    {% if tile.note %}<div class="tile-note">{{ tile.note }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<h2>Gold-set rows</h2>
+<div class="gold-table-wrap">
+<table class="gold-table">
+  <thead>
+    <tr><th>Question</th><th>Key</th><th>Refused</th><th>Faithfulness</th><th>Relevance</th><th>Precision</th></tr>
+  </thead>
+  <tbody>
+    {% for row in gold_rows %}
+    <tr{% if row.is_red_row %} class="gold-row-red"{% endif %}>
+      <td>{{ row.question }}{% if row.is_red_row %} <span class="red-row-badge">the blueprint's red row</span>{% endif %}</td>
+      <td>{{ row.answer_key }}</td>
+      <td>{{ row.refused|yesno:"yes,no" }}</td>
+      {% if row.scores %}
+      <td>{{ row.scores.faithfulness|floatformat:2 }}</td>
+      <td>{{ row.scores.answer_relevancy|floatformat:2 }}</td>
+      <td>{{ row.scores.context_precision|floatformat:2 }}</td>
+      {% else %}
+      <td colspan="3">not scored — refusal correctness is measured by refusal rate, not faithfulness</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+<h2>Your recent asks</h2>
+<p class="source-meta">Live answers here are not judged — judging costs a model call per answer.</p>
+
+{% if recent_asks %}
+<ul class="history-list">
+  {% for record in recent_asks %}
+  <li>
+    <a href="{% url 'history_detail' record.pk %}">
+      <span class="history-question">{{ record.question|truncatechars:80 }}</span>
+      <span class="history-meta">
+        {{ record.created_at|date:"Y-m-d H:i" }} &middot;
+        {% if record.error %}errored{% elif record.refused %}refused{% else %}answered{% endif %} &middot;
+        {% if record.latency_s %}{{ record.latency_s }}s{% else %}—{% endif %} &middot;
+        {{ record.sources|length }} source{{ record.sources|length|pluralize }} &middot;
+        score: not scored
+      </span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No questions asked yet. <a href="{% url 'ask' %}">Ask one</a>.</p>
+{% endif %}
+{% endblock %}
