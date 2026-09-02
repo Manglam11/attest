@@ -77,6 +77,29 @@ not apply: this app has no username-change flow, and a rename via
 `/admin` is already out of scope per the threat model above (Django's
 own admin/superuser boundary is a separate, unbuilt concern).
 
+## Implementation note (T6.C) — synthetic corpus reproducibility
+
+T6.5's two-tenant isolation test ingested two fake 10-K excerpts, owned by
+test users `bruno` and `carla`, alongside `alice`'s real filing. Those two
+PDFs were built ad hoc and then deleted — 143 of the collection's 428 points
+were resting on documents nobody could rebuild, which contradicts the reason
+`data/corpus/` is gitignored in the first place: it's supposed to be
+rebuildable from something in the repo, not the only copy of anything.
+
+Fixed by committing `engine/app/gen_synthetic_corpus.py`, which holds both
+excerpts' text as literal constants and lays them out into PDFs with
+PyMuPDF — already a pinned engine dependency, so this added none. Verified
+deterministic the way it matters for ingestion: two separate runs produce
+byte-identical *extracted* text (`page.get_text()`, the same call
+`ingest.py` uses), even though the PDF container bytes themselves differ
+run to run — PyMuPDF's internal object layout isn't byte-stable, and
+nothing downstream reads raw PDF bytes. The invented content does not match
+what was ingested before; the old counts (86, 57) are gone and not
+reconstructable, so the new ones (10, 9) are a fresh baseline, not a
+correction. Isolation was re-checked against the regenerated corpus directly
+against `retrieve()` (Qdrant only, no model call): each of `alice`/`bruno`/
+`carla` retrieves only its own `doc_id`.
+
 ## Consequence of point 4
 
 With the engine unreachable from the host, its liveness can no longer be
