@@ -1,0 +1,334 @@
+{
+  "measured_at": "2026-09-02T01:21:56.381739+00:00",
+  "stages": [
+    "embed_dense",
+    "embed_sparse",
+    "qdrant_hybrid_query",
+    "unpack_candidates",
+    "rerank"
+  ],
+  "cold": {
+    "import_s": 13.71493565899982,
+    "first_call_s": 5.747714081000595,
+    "health_ok": true
+  },
+  "warm": {
+    "calls": [
+      {
+        "question": "What were Apple's total net sales for fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "What were Apple's total net sales for fiscal 2025?",
+        "stage_timings_s": {
+          "embed_dense": 0.026286333000825834,
+          "embed_sparse": 0.00018499199995858362,
+          "qdrant_hybrid_query": 0.007673570000406471,
+          "unpack_candidates": 6.983000275795348e-06,
+          "rerank": 5.221952457999578
+        },
+        "total_outer_s": 5.256110860000263,
+        "stage_sum_s": 5.256104336001044,
+        "pool_size": 20
+      },
+      {
+        "question": "What was Apple's cost of sales in fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "Apple cost of sales fiscal year 2025",
+        "stage_timings_s": {
+          "embed_dense": 0.021097305000694178,
+          "embed_sparse": 0.0007144370001697098,
+          "qdrant_hybrid_query": 0.0073649790001582005,
+          "unpack_candidates": 4.098000317753758e-06,
+          "rerank": 4.696755424000003
+        },
+        "total_outer_s": 4.725941464000243,
+        "stage_sum_s": 4.7259362430013425,
+        "pool_size": 20
+      },
+      {
+        "question": "What was Apple's net income for fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "Apple net income fiscal 2025 Consolidated Statements of Operations",
+        "stage_timings_s": {
+          "embed_dense": 0.023077413999999408,
+          "embed_sparse": 0.00020442999993974809,
+          "qdrant_hybrid_query": 0.005251708999821858,
+          "unpack_candidates": 5.711000085284468e-06,
+          "rerank": 5.222834907000106
+        },
+        "total_outer_s": 5.251378048999868,
+        "stage_sum_s": 5.251374170999952,
+        "pool_size": 20
+      },
+      {
+        "question": "How much did Apple spend on research and development in fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "research and development expense fiscal 2025",
+        "stage_timings_s": {
+          "embed_dense": 0.018054711000331736,
+          "embed_sparse": 0.00014538400046149036,
+          "qdrant_hybrid_query": 0.006454041999859328,
+          "unpack_candidates": 3.776999619731214e-06,
+          "rerank": 4.723639823999292
+        },
+        "total_outer_s": 4.74830190800003,
+        "stage_sum_s": 4.748297737999565,
+        "pool_size": 20
+      },
+      {
+        "question": "What was Apple's diluted earnings per share in fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "diluted earnings per share fiscal 2025",
+        "stage_timings_s": {
+          "embed_dense": 0.02868778399988514,
+          "embed_sparse": 0.00023749299998598872,
+          "qdrant_hybrid_query": 0.004419769000378437,
+          "unpack_candidates": 5.009999767935369e-06,
+          "rerank": 4.734547109999767
+        },
+        "total_outer_s": 4.767902315999891,
+        "stage_sum_s": 4.767897165999784,
+        "pool_size": 20
+      },
+      {
+        "question": "How many diluted shares did Apple use to compute earnings per share in fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "diluted shares earnings per share fiscal 2025 2024",
+        "stage_timings_s": {
+          "embed_dense": 0.028075367999917944,
+          "embed_sparse": 0.0001916840001285891,
+          "qdrant_hybrid_query": 0.006836446000306751,
+          "unpack_candidates": 6.612999641220085e-06,
+          "rerank": 4.919672629000161
+        },
+        "total_outer_s": 4.954789301999881,
+        "stage_sum_s": 4.954782740000155,
+        "pool_size": 20
+      },
+      {
+        "question": "What were Apple's total assets as of the end of fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "What were Apple's total assets as of the end of fiscal 2025?",
+        "stage_timings_s": {
+          "embed_dense": 0.02079419500023505,
+          "embed_sparse": 0.00016172599953279132,
+          "qdrant_hybrid_query": 0.006098564000240003,
+          "unpack_candidates": 5.80100004299311e-06,
+          "rerank": 5.253278931999375
+        },
+        "total_outer_s": 5.280345150999892,
+        "stage_sum_s": 5.280339217999426,
+        "pool_size": 20
+      },
+      {
+        "question": "What was Apple's operating income for fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "operating income fiscal 2025",
+        "stage_timings_s": {
+          "embed_dense": 0.01801968499967188,
+          "embed_sparse": 0.00013775899969914462,
+          "qdrant_hybrid_query": 0.0047805300000618445,
+          "unpack_candidates": 3.4469994716346264e-06,
+          "rerank": 4.9869685739995475
+        },
+        "total_outer_s": 5.009913803000018,
+        "stage_sum_s": 5.009909994998452,
+        "pool_size": 20
+      },
+      {
+        "question": "What was the total of Apple's cash, cash equivalents, and marketable securities at the end of fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 2,
+        "query": "cash cash equivalents marketable securities fiscal 2025 end total",
+        "stage_timings_s": {
+          "embed_dense": 0.018181825000283425,
+          "embed_sparse": 0.0001575579999553156,
+          "qdrant_hybrid_query": 0.0056412350004393375,
+          "unpack_candidates": 4.318999344832264e-06,
+          "rerank": 5.500334059999659
+        },
+        "total_outer_s": 5.5243229130001055,
+        "stage_sum_s": 5.524318996999682,
+        "pool_size": 20
+      },
+      {
+        "question": "What was the total of Apple's cash, cash equivalents, and marketable securities at the end of fiscal 2025?",
+        "call_index": 1,
+        "n_calls_this_question": 2,
+        "query": "Note 4 Financial Instruments table total Fair Value 2025",
+        "stage_timings_s": {
+          "embed_dense": 0.01858100600020407,
+          "embed_sparse": 0.00018435999936627923,
+          "qdrant_hybrid_query": 0.004972343000190449,
+          "unpack_candidates": 3.3869991966639645e-06,
+          "rerank": 5.427073238000048
+        },
+        "total_outer_s": 5.450818951999281,
+        "stage_sum_s": 5.450814333999006,
+        "pool_size": 20
+      },
+      {
+        "question": "In the five-year stock performance graph, what was the ending value of a $100 investment in Apple common stock as of September 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "five-year stock performance graph Apple $100 investment September 2025",
+        "stage_timings_s": {
+          "embed_dense": 0.018063268000332755,
+          "embed_sparse": 0.00016719700033718254,
+          "qdrant_hybrid_query": 0.005785443999229756,
+          "unpack_candidates": 5.089999831398018e-06,
+          "rerank": 9.004988579999917
+        },
+        "total_outer_s": 9.029013375999966,
+        "stage_sum_s": 9.029009578999649,
+        "pool_size": 20
+      },
+      {
+        "question": "What base amount was assumed invested in the stock performance comparison graph as of September 2020?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "stock performance comparison graph September 2020 base amount invested $100",
+        "stage_timings_s": {
+          "embed_dense": 0.020079462000467174,
+          "embed_sparse": 0.00017716599995765137,
+          "qdrant_hybrid_query": 0.004762669999763602,
+          "unpack_candidates": 4.128000000491738e-06,
+          "rerank": 8.96040002799964
+        },
+        "total_outer_s": 8.985428664999745,
+        "stage_sum_s": 8.985423453999829,
+        "pool_size": 20
+      },
+      {
+        "question": "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?",
+        "call_index": 0,
+        "n_calls_this_question": 1,
+        "query": "total net sales research and development spend fiscal 2025",
+        "stage_timings_s": {
+          "embed_dense": 0.017534882000290963,
+          "embed_sparse": 0.0001744110004437971,
+          "qdrant_hybrid_query": 0.004638474000785209,
+          "unpack_candidates": 3.998000465799123e-06,
+          "rerank": 5.558891519999634
+        },
+        "total_outer_s": 5.581248023999251,
+        "stage_sum_s": 5.581243285001619,
+        "pool_size": 20
+      }
+    ],
+    "stage_stats": {
+      "embed_dense": {
+        "min": 0.017534882000290963,
+        "max": 0.02868778399988514,
+        "mean": 0.021271787538703044,
+        "stdev": 0.0038565112719411068
+      },
+      "embed_sparse": {
+        "min": 0.00013775899969914462,
+        "max": 0.0007144370001697098,
+        "mean": 0.00021835361537971318,
+        "stdev": 0.00014533938063111444
+      },
+      "qdrant_hybrid_query": {
+        "min": 0.004419769000378437,
+        "max": 0.007673570000406471,
+        "mean": 0.005744598077049327,
+        "stdev": 0.0010337111589075855
+      },
+      "unpack_candidates": {
+        "min": 3.3869991966639645e-06,
+        "max": 6.983000275795348e-06,
+        "mean": 4.797076773964083e-06,
+        "stdev": 1.1335829098480206e-06
+      },
+      "rerank": {
+        "min": 4.696755424000003,
+        "max": 9.004988579999917,
+        "mean": 5.708564406461287,
+        "stdev": 1.4237396556966138
+      }
+    },
+    "total_stats": {
+      "min": 4.725941464000243,
+      "max": 9.029013375999966,
+      "mean": 5.735808829461418,
+      "stdev": 1.4222422826759473
+    },
+    "dominant_stage": "rerank"
+  },
+  "self_test": {
+    "description": "stage_sum_s must be within 5% of independently-measured total_outer_s per call",
+    "max_gap_s": 6.561999725818168e-06,
+    "max_gap_pct": 0.0001324375129971637,
+    "worst_query": "diluted shares earnings per share fiscal 2025 2024",
+    "passed": true
+  },
+  "end_to_end_reconciliation": {
+    "mean_warm_retrieval_call_s": 5.735808829461418,
+    "rows": [
+      {
+        "question": "What were Apple's total net sales for fiscal 2025?",
+        "observed_latency_s": 53.623,
+        "calls_this_ask_gemini": 2,
+        "n_retrieval_calls": 1,
+        "estimated_retrieval_s": 5.735808829461418,
+        "estimated_retrieval_pct_of_total": 10.696545940102975
+      },
+      {
+        "question": "What were Apple's total assets as of the end of fiscal 2025?",
+        "observed_latency_s": 84.285,
+        "calls_this_ask_gemini": 2,
+        "n_retrieval_calls": 1,
+        "estimated_retrieval_s": 5.735808829461418,
+        "estimated_retrieval_pct_of_total": 6.805254587959208
+      },
+      {
+        "question": "In the five-year stock performance graph, what was the ending value of a $100 investment in Apple common stock as of September 2025?",
+        "observed_latency_s": 91.249,
+        "calls_this_ask_gemini": 2,
+        "n_retrieval_calls": 1,
+        "estimated_retrieval_s": 5.735808829461418,
+        "estimated_retrieval_pct_of_total": 6.285886781730669
+      },
+      {
+        "question": "How much larger was Apple's total net sales than its research and development spend in fiscal 2025?",
+        "observed_latency_s": 122.285,
+        "calls_this_ask_gemini": 2,
+        "n_retrieval_calls": 1,
+        "estimated_retrieval_s": 5.735808829461418,
+        "estimated_retrieval_pct_of_total": 4.690525272487565
+      },
+      {
+        "question": "What was Apple's cost of sales in fiscal 2025?",
+        "observed_latency_s": 67.078,
+        "calls_this_ask_gemini": 3,
+        "n_retrieval_calls": 1,
+        "estimated_retrieval_s": 5.735808829461418,
+        "estimated_retrieval_pct_of_total": 8.55095385888282
+      },
+      {
+        "question": "What was the total of Apple's cash, cash equivalents, and marketable securities at the end of fiscal 2025?",
+        "observed_latency_s": 195.979,
+        "calls_this_ask_gemini": 4,
+        "n_retrieval_calls": 2,
+        "estimated_retrieval_s": 11.471617658922836,
+        "estimated_retrieval_pct_of_total": 5.8534933125094195
+      },
+      {
+        "question": "What base amount was assumed invested in the stock performance comparison graph as of September 2020?",
+        "observed_latency_s": 43.464,
+        "calls_this_ask_gemini": 2,
+        "n_retrieval_calls": 1,
+        "estimated_retrieval_s": 5.735808829461418,
+        "estimated_retrieval_pct_of_total": 13.196688821694776
+      }
+    ]
+  }
+}
