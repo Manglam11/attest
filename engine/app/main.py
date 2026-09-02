@@ -42,5 +42,7 @@ def ask(request: AskRequest, owner_id: str = Depends(require_owner)):
         "answer": result["answer"],
         "tool_calls": result["tool_calls"],
         "contexts": result["contexts"],
+        "sources": result["sources"],
+        "refused": result["refused"],
         "latency_s": latency_s,
     }

@@ -6,7 +6,8 @@ from langchain_core.messages import ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.quota import QuotaCounterCallback
-from app.request_context import current_owner_id
+from app.refusal import REFUSAL_TEXT, is_refusal
+from app.request_context import current_owner_id, current_retrieved_chunks
 from app.tools import retrieve_document_chunks
 
 MODEL = "gemini-3.6-flash"
@@ -18,7 +19,7 @@ SYSTEM_PROMPT = (
     "For a question with multiple parts, retrieve for each part. "
     "Cite the page numbers you used. "
     "If the document does not contain the answer, say: "
-    "'I cannot answer this from the provided sources.'"
+    f"'{REFUSAL_TEXT}'"
 )
 
 CHUNK_BOUNDARY = re.compile(r"\n\n(?=\[page )")
@@ -59,15 +60,38 @@ def _collect_contexts(messages) -> list[str]:
     return contexts
 
 
+def _dedupe_sources(chunks: list[dict]) -> list[dict]:
+    seen = set()
+    sources = []
+    for c in chunks:
+        key = (c["doc_id"], c["page"], c["text"])
+        if key in seen:
+            continue
+        seen.add(key)
+        sources.append(
+            {
+                "doc_id": c["doc_id"],
+                "owner_id": c["owner_id"],
+                "page": c["page"],
+                "score": c["score"],
+                "text": c["text"],
+            }
+        )
+    return sources
+
+
 def run_agent(question: str, owner_id: str) -> dict:
-    token = current_owner_id.set(owner_id)
+    owner_token = current_owner_id.set(owner_id)
+    chunks_token = current_retrieved_chunks.set([])
     try:
         result = agent.invoke(
             {"messages": [{"role": "user", "content": question}]},
             config={"callbacks": [QuotaCounterCallback()]},
         )
+        sources = _dedupe_sources(current_retrieved_chunks.get())
     finally:
-        current_owner_id.reset(token)
+        current_owner_id.reset(owner_token)
+        current_retrieved_chunks.reset(chunks_token)
     messages = result["messages"]
 
     tool_calls = []
@@ -77,8 +101,12 @@ def run_agent(question: str, owner_id: str) -> dict:
                 {"tool": call["name"], "query": call["args"].get("question", "")}
             )
 
+    answer = _flatten_content(messages[-1].content)
+
     return {
-        "answer": _flatten_content(messages[-1].content),
+        "answer": answer,
         "tool_calls": tool_calls,
         "contexts": _collect_contexts(messages),
+        "sources": sources,
+        "refused": is_refusal(answer),
     }
