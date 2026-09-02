@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Ask — Attest{% endblock %}
+
+{% block content %}
+<h1>Ask your documents</h1>
+
+<form method="post" class="stacked" data-waits-on-engine>
+  {% csrf_token %}
+  <p>
+    <label for="question">Question</label>
+    <textarea id="question" name="question" rows="3" required>{{ question|default:"" }}</textarea>
+  </p>
+  <button type="submit">Ask</button>
+  <div class="waiting">Asking the engine — this can take up to 3 minutes…</div>
+</form>
+
+{% if error == 'unreachable' %}
+<div class="card error">
+  <strong>The engine is unreachable.</strong>
+  <p>It may be starting up or down for maintenance. Try again shortly.</p>
+</div>
+{% elif error == 'auth' %}
+<div class="card error">
+  <strong>Your request could not be authenticated with the engine.</strong>
+  <p>Log out and back in, then try again. If this persists, it's a configuration problem, not yours.</p>
+</div>
+{% elif error == 'response' %}
+<div class="card error">
+  <strong>The engine returned an unexpected error.</strong>
+  <p>{{ error_detail }}</p>
+</div>
+{% endif %}
+
+{% if result %}
+  {% if refused %}
+  <div class="card refusal">
+    <strong>No grounded answer found — this is the engine working correctly.</strong>
+    <p>It declined to answer because your documents don't contain this. That's the intended behavior, not a failure.</p>
+  </div>
+  {% else %}
+  <div class="card">
+    <strong>Answer</strong>
+    <p>{{ result.answer }}</p>
+  </div>
+  {% endif %}
+
+  <div class="card trace">
+    <strong>Tool calls</strong>
+    {% if result.tool_calls %}
+    <ul>
+      {% for call in result.tool_calls %}
+      <li><code>{{ call.tool }}</code> — "{{ call.query }}"</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>None — the agent answered without retrieving.</p>
+    {% endif %}
+    <p>Latency: {{ result.latency_s }}s</p>
+  </div>
+
+  {% if result.contexts %}
+  <details class="card">
+    <summary>Retrieved passages ({{ result.contexts|length }})</summary>
+    {% for chunk in result.contexts %}
+    <pre>{{ chunk }}</pre>
+    {% endfor %}
+  </details>
+  {% endif %}
+{% endif %}
+{% endblock %}
