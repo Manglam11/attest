@@ -1,0 +1,31 @@
+# Production override — merge over docker-compose.yml, never used alone:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# What this changes vs. the dev compose:
+#   - drops the ./engine/app and ./shell source bind mounts, so each
+#     container runs the code baked into its own image, not the host's
+#     working tree
+#   - drops uvicorn/gunicorn --reload, which only matters when source is
+#     live-mounted
+#
+# Paths below still require real persistent storage on the host — a host
+# with no persistent disk loses these on every restart:
+#   - postgres_data, qdrant_data, hf_cache (named volumes — survive a
+#     container restart, not a host with no volume driver at all)
+#   - ./data/corpus, ./data/figures, ./data/quota, ./data/eval (host bind
+#     mounts — data, not source code, deliberately kept; they resolve to
+#     nothing on a host that doesn't have this checkout on disk)
+
+services:
+  engine:
+    volumes: !override
+      - ./data/corpus:/code/data/corpus:ro
+      - ./data/figures:/code/data/figures
+      - ./data/quota:/code/data/quota
+      - hf_cache:/root/.cache/huggingface
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  shell:
+    volumes: !override
+      - ./data/eval:/code/data/eval:ro
+    command: ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--timeout", "220"]
