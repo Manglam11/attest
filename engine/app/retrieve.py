@@ -1,3 +1,5 @@
+import os
+
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from fastembed import SparseTextEmbedding
 from qdrant_client import QdrantClient
@@ -15,8 +17,8 @@ from qdrant_client.models import (
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 SPARSE_MODEL = "Qdrant/bm25"
 RERANK_MODEL = "BAAI/bge-reranker-base"
-QDRANT_HOST = "qdrant"
-QDRANT_PORT = 6333
+QDRANT_HOST = os.environ.get("QDRANT_HOST", "qdrant")
+QDRANT_PORT = int(os.environ.get("QDRANT_PORT", "6333"))
 COLLECTION = "attest_chunks"
 DENSE_NAME = "dense"
 SPARSE_NAME = "sparse"
