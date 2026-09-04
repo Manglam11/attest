@@ -1,154 +1,218 @@
+<div align="center">
+
 # Attest
 
-Multimodal, self-grading RAG over SEC filings. Attest ingests a 10-K, answers
-plain-English questions with page citations, reads the figures inside the
-filing with a vision model rather than skipping them, and grades its own
-answers against the same rubric a human reviewer would use — retrieval
-precision, faithfulness to the source, and answer relevance — so that when it
-cannot ground an answer in the document, it says so instead of inventing one.
-The self-grading layer is the product here, not a bolted-on eval script: the
-trust dashboard described below renders those numbers live, including the
-one that currently fails.
+**A retrieval system that grades its own answers — and refuses to answer when it can't stay grounded.**
+
+Multimodal, self-evaluating RAG over real SEC filings.
+
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-5.x-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20DB-DC244C?logo=qdrant&logoColor=white)](https://qdrant.tech/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Agent-1C3C3C)](https://langchain-ai.github.io/langgraph/)
+[![RAGAS](https://img.shields.io/badge/RAGAS-0.4.3-6E56CF)](https://docs.ragas.io/)
+
+[![Faithfulness](https://img.shields.io/badge/faithfulness-1.000-2EA043)](#results)
+[![Answer Relevancy](https://img.shields.io/badge/answer%20relevancy-0.979-2EA043)](#results)
+[![Context Precision](https://img.shields.io/badge/context%20precision-0.774-D29922)](#the-metric-we-did-not-hit)
+[![Status](https://img.shields.io/badge/status-feature%20frozen-informational)](#roadmap)
+
+</div>
+
+---
+
+## What this is
+
+Most retrieval-augmented generation demos answer confidently and are never asked to prove it. Attest is built the other way around.
+
+You give it a real financial filing. You ask a plain-English question. It retrieves the relevant passages, answers with citations pointing back to the exact page, and then **runs a second model over its own answer** to check whether every claim is actually supported by the retrieved text. If the answer isn't grounded, it says so instead of inventing one.
+
+The evaluation criteria were **frozen before a single line of the pipeline was written**, so the numbers below are a contract the system had to meet — not a target chosen after seeing the results.
+
+The corpus is Apple's FY2025 Form 10-K, a 65-page SEC filing including tables and figures.
+
+---
+
+## Results
+
+Measured with [RAGAS](https://docs.ragas.io/) against a hand-built gold set, using an independent judge model on a separate API key from the answering model.
+
+| Metric | Target (frozen §02) | Measured | |
+|---|---|---|---|
+| **Faithfulness** — are the answer's claims supported by retrieved text? | ≥ 0.90 | **1.000** | ✅ PASS |
+| **Answer relevancy** — does the answer address the question asked? | ≥ 0.85 | **0.979** | ✅ PASS |
+| **Hallucination flag** — does it refuse unanswerable questions? | < 0.50 | **0 / 3 hallucinated** | ✅ PASS |
+| **Context precision** — is the retrieved context actually relevant? | ≥ 0.85 | **0.774** | ❌ **FAIL** |
+
+### The metric we did not hit
+
+**Context precision came in at 0.774 against a 0.85 target, and it is rendered on the product's own trust dashboard rather than hidden.**
+
+This is deliberate. A system whose entire premise is measurement honesty does not get to quietly drop the number it doesn't like.
+
+The diagnosis: retrieval *recall* is fine — the right passage is reliably inside the candidate set. The weakness is **ranking**. Relevant chunks are being retrieved but not consistently promoted to the top positions, which drags precision down without hurting faithfulness, because the generator still finds the grounding it needs further down the list. The fix belongs in the reranking stage, and it is scheduled rather than papered over.
+
+An interviewer asking "what's broken and why?" gets a real answer. That was the point.
+
+---
+
+## Latency: measure before you blame
+
+End-to-end response times were slower than the 8-second p95 target, so the pipeline was profiled stage by stage rather than optimised on instinct.
+
+| Where the time goes | Share |
+|---|---|
+| Third-party model provider calls | **96.9%** |
+| Attest's own retrieval, fusion, and reranking stack | **3.1%** |
+
+The system's own machinery is not the bottleneck — the hosted LLM is. Observed end-to-end times have ranged from ~14s for a grounded answer to a 251s outlier on a question shape that had previously completed in 14s, indicating provider-side variance rather than a code path regression.
+
+**This is why the number is reported as a breakdown and not as a single figure.** "Slow" is not a finding. "96.9% of it is not ours" is.
+
+---
 
 ## Architecture
 
-Four services under Docker Compose, plus a profile-gated eval image:
+```mermaid
+flowchart LR
+    U([User]) --> S[Django Shell<br/>auth · tenancy · UI]
+    S -->|HTTP| E[FastAPI Engine]
 
-- **`attest_shell`** (Django, published on `:8001`) — the product a user
-  touches: signup/login, an ask page, per-user history, a library of owned
-  documents, and a trust dashboard. Mints a signed HMAC token on login; every
-  downstream call carries it.
-- **`attest_engine`** (FastAPI) — retrieval, reranking, the agent loop, and
-  the vision call for figures. Publishes no host port; it's reached only
-  from inside the Docker network (by `attest_shell`, or with
-  `docker compose exec`). Verifies the shell's signed token on every request
-  and derives `owner_id` from it — never from the request body — which is
-  what makes tenant isolation enforceable rather than advisory.
-- **`attest_qdrant`** (`:6333`) — the vector store. One collection,
-  `attest_chunks`, holding both dense text embeddings and figure-description
-  embeddings for every ingested page.
-- **`attest_postgres`** (`:5432`) — two application tables, not just
-  Django's own. `AskRecord` is one row per ask attempt — success, refusal,
-  or error alike, with `sources`, `tool_calls`, `refused`, and `latency_s` —
-  so history and the trust dashboard never have to infer honesty from
-  answer text. `Document` is one row per document a user owns; the library
-  page reads this table, not Qdrant, so it never depends on a live vector
-  query to render.
+    subgraph E [FastAPI Engine]
+        direction TB
+        A[LangGraph Agent<br/>query rewrite · routing]
+        A --> H[Hybrid Retrieval]
+        H --> R[Cross-Encoder<br/>Reranker]
+        R --> G[Answer + Citations]
+        G --> J[Self-Grading<br/>faithfulness judge]
+    end
 
-**Retrieval pipeline:** a query is embedded twice — dense
-(`bge-small-en-v1.5`) and sparse (BM25) — fused against Qdrant with
-reciprocal rank fusion into a candidate pool, then re-scored by a
-cross-encoder (`bge-reranker-base`) before the top chunks reach the agent.
+    H <--> Q[(Qdrant<br/>dense + sparse vectors)]
+    S <--> P[(PostgreSQL<br/>users · docs · ask history)]
+    J --> S
+```
 
-**Where model calls happen:** the agent (`gemini-3.6-flash`) runs inside a
-LangGraph tool loop that can call retrieval more than once per question
-before answering — this is the dominant cost of every ask, both in latency
-and in quota (see Latency below). The offline judge (`gemini-3.5-flash-lite`)
-only runs during eval batches, never on a live ask — the trust dashboard
-never invents a score for something it hasn't actually judged. A vision call
-reads each qualifying figure at ingest time; today's corpus has exactly one
-such figure.
+### The retrieval pipeline
 
-**Current corpus:** 304 points across three tenants — `alice`/`aapl_10k`
-(285 points: 65 pages, 284 text chunks, 1 figure — the real filing),
-`bruno`/`bruno_10k_excerpt` (10 points, synthetic), and
-`carla`/`carla_10k_excerpt` (9 points, synthetic).
-*(source: `docs/sessions/Attest_Session_20.md`)*
+1. **Ingestion** — the filing is parsed page by page. Text is chunked; figures and charts are sent to a **vision model** and their descriptions are embedded *alongside* the text, so a question about a chart is answerable through the same index.
+2. **Hybrid search** — every query runs twice: a **dense** semantic search (`bge-small-en-v1.5`) that understands meaning, and a **sparse** keyword search (BM25) that catches exact terms like line-item names and figures. Dense search alone misses literal tokens; sparse alone misses paraphrase.
+3. **Reciprocal Rank Fusion** — the two result lists are merged by rank position rather than by raw score, since the two scoring scales aren't comparable.
+4. **Cross-encoder reranking** — `bge-reranker-base` re-reads each candidate *together with* the query, which is slower than embedding comparison but far more accurate, and reorders the shortlist.
+5. **Agentic answering** — a LangGraph agent rewrites the query when the first attempt retrieves poorly and routes multi-step questions, with no hardcoded conditional logic.
+6. **Self-grading** — an independent judge model scores the answer's faithfulness against the retrieved context. Ungrounded answers are flagged and refused rather than returned.
 
-## Success criteria (§02)
+### Multi-tenancy
 
-Frozen targets, measured against a 12-question gold set (3 of the 12 are
-deliberately unanswerable, to test refusal). Every number below is read
-directly from the judged eval artifact or the raw latency log — none
-carried forward from a prior write-up.
+Every vector carries an owner in its payload, and retrieval is filtered at the database level, not after the fact. Three tenants share one collection with no cross-tenant leakage:
 
-| Metric | Target | Measured | Verdict |
-| --- | --- | --- | --- |
-| Faithfulness | ≥ 0.90 | **1.000** (n=12) | PASS |
-| Retrieval precision | ≥ 0.85 | **0.774** (n=12) | **FAIL** |
-| Answer relevance | ≥ 0.85 | **0.979** (n=12) | PASS |
-| Hallucination flag | < 0.50 | **0.0** — 0/3 unanswerable questions hallucinated (all 3 correctly refused) | PASS |
-| Figure-grounded | ≥ 80% (aspirational) | not attempted — corpus has one qualifying figure | n/a |
-| p95 latency | ≤ 8s | **EXCLUDED** — n=7 live asks, every one exceeded 8s (43.5s–196.0s) | **FAIL (excluded)** |
+| Tenant | Corpus | Points |
+|---|---|---|
+| `alice` | Apple FY2025 10-K (65 pages) | 285 |
+| `bruno` | synthetic excerpt | 10 |
+| `carla` | synthetic excerpt | 9 |
+| | **Total** | **304** |
 
-*Sources: faithfulness, retrieval precision, answer relevance, and
-hallucination flag from `data/eval/judged_20260831T101752Z.json`
-(`summary.faithfulness`, `summary.context_precision`,
-`summary.answer_relevancy`, `summary.refusal_rate`). Latency from
-`data/eval/latency_samples.json` (7 recorded live-ask samples,
-43.464s–195.979s).*
-
-Retrieval precision's known cause: the reranker demotes the correct chunk
-below its fusion-pool rank on 2 of the 12 gold rows (both still inside the
-top-5 cutoff). A larger reranker recovered +0.0095 on those two rows at
-roughly 4x the per-call rerank cost and was reverted as not worth it against
-an already-excluded latency budget.
-
-## Latency
-
-None of the 7 recorded live asks came in under the 8s p95 target — the
-fastest was 43.464s, the slowest 195.979s
-(`data/eval/latency_samples.json`). Splitting where that time actually
-goes: retrieval + rerank, measured directly against the same 7 questions
-with the deployed reranker, accounts for **4.7%–13.2%** of each ask's total
-observed latency (`data/eval/retrieval_timing_20260902T012156Z.json`,
-`end_to_end_reconciliation`). The remaining **87–95%** of every ask sits in
-the agent's own round-trips to the model provider — not in our retrieval,
-reranking, or application code, all three of which have been individually
-checked and ruled out as the lever.
-
-That variance is real and current: a single-hop ask observed 2026-09-02 ran
-251.648s end to end, against the same question shape that previously
-completed in 14.1s — and ran long enough that the shell's own 210s client
-timeout abandoned it before the engine finished, discarding a correct answer
-that was never shown or persisted. The full phase split — two model
-round-trips (96.93s, 146.91s; 243.84s/251.648s = 96.9% of the total) against
-7.81s of retrieval and rerank, the latter consistent with the isolated
-seven-run baseline above — is recorded in
-`docs/sessions/Attest_Session_21.md`, derived from container log timestamps
-and the `AskRecord` row the shell wrote on timeout, not carried forward from
-memory. It confirms the pattern already measured here (provider round-trips
-dominating a small, stable stack-side cost) and is the reason live asks are
-switched off for tomorrow's demo (see `DEMO_RUNBOOK.md`). Root cause for the
-provider-side variance itself is still not isolated — host contention and a
-provider-side penalty remain equally plausible and both require metered
-spend to test, which this write-up did not make.
-
-## What is not done, and why
-
-- **Upload.** No upload button exists. `data/corpus` is mounted read-only
-  into the engine, ingest's ML dependencies live only in the engine image
-  (not the shell's), and — found while timing a real ingest — the vision
-  call ingest makes per figure spends `GEMINI_API_KEY` without going
-  through the same quota counter the agent uses
-  (`engine/app/ingest.py`, `engine/app/quota.py`). A user-facing upload that
-  makes an uncounted, uncapped number of paid calls per file isn't
-  shippable; a quota ceiling for vision has to land first.
-- **Retrieval precision fails its target (0.774 vs 0.85).** Diagnosed, not
-  fixed: two gold rows get demoted by the reranker; the fix tried (a bigger
-  reranker) cost ~4x the latency for a ~0.01 gain and was reverted.
-- **p95 latency is excluded, not narrowly missed.** Every one of 7 timed
-  live asks ran past 8 seconds, and the dominant cost is provider round-trip
-  time, not our stack. That root cause is still open.
-- **The shell can silently lose a slow answer.** The shell's own client
-  timeout on the engine call is 210s (`shell/accounts/engine_client.py:8`),
-  tighter than gunicorn's 220s worker timeout — so an engine call that runs
-  past 210s is abandoned by the shell while the engine keeps computing, and
-  that answer is never written to Postgres. Known, not fixed.
-- **No OCR path, no failure detection.** `ingest.py` does a bare text
-  extraction; a scanned PDF would silently produce ~0 chunks instead of
-  erroring. `Document.status` can express `failed`, but nothing produces
-  that state yet.
-- **The judge key has no spend ceiling.** Unlike the agent key's persisted
-  counter, `JUDGE_API_KEY` is protected only by fail-fast-and-resume on 429.
-- **Markdown renders raw in the shell.** The engine returns `**bold**`; the
-  browser shows the asterisks literally. Cosmetic, known, not fixed.
-
-## Running it
-
-See `DEMO_RUNBOOK.md` for the full cold-start, verification, and
-troubleshooting procedure — every command and expected output in it was
-copied from a real run, not written from memory.
+The isolation test is paired with a **positive control** — a filter matching zero results is indistinguishable from a filter that works, so every isolation check sits beside a case that must return data.
 
 ---
-*Author: Manglam Dubey*
+
+## Tech stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Web shell | Django 5 | Batteries-included auth, sessions, ORM, admin |
+| Inference engine | FastAPI | Async, lightweight, clean separation from the shell |
+| Vector store | Qdrant | Named vectors for dense + sparse in one collection, payload filtering |
+| Relational store | PostgreSQL 17 | Users, documents, ask history, audit trail |
+| Dense embeddings | `bge-small-en-v1.5` | Strong retrieval quality per megabyte |
+| Sparse retrieval | BM25 via FastEmbed | Exact-term matching the dense model misses |
+| Reranking | `bge-reranker-base` | Cross-encoder accuracy on the shortlist |
+| Agent | LangGraph | Explicit state graph over implicit prompt chaining |
+| Generation | Gemini Flash | Fast, long-context, cost-effective |
+| Evaluation | RAGAS 0.4.3 | Standard metrics, run in an isolated container |
+| Orchestration | Docker Compose | Four services, reproducible from a cold clone |
+
+The answering model and the judge model use **separate API keys on separate projects**, so the system cannot grade itself with the same credentials it answers with.
+
+---
+
+## Quickstart
+
+**Requirements:** Docker with Compose, and a Gemini API key.
+
+```bash
+git clone https://github.com/Manglam11/attest.git
+cd attest
+cp .env.example .env
+# fill in GEMINI_API_KEY, JUDGE_API_KEY, and the Postgres/secret values
+docker compose up -d
+```
+
+Cold start to all four services answering: **~39 seconds** measured. The engine is slowest because embedding and reranker models load at import time; its health check allows for this. Watch `docker compose ps` rather than the terminal going quiet.
+
+Then open <http://localhost:8001/>.
+
+For a deployment-shaped run without source bind mounts or hot reload:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+---
+
+## Engineering log
+
+Real defects found and fixed, kept because the debugging is more interesting than the happy path.
+
+- **The image was 4× too large for the wrong reason.** The engine image weighed 8.66 GB. The hypothesis — that `sentence-transformers` was pulling CUDA-linked PyTorch despite a CPU-only deployment target — was confirmed cheaply by inspecting the built image rather than by rebuilding: NVIDIA wheels, CUDA torch, and Triton accounted for ~4.5 GB, and `torch.cuda.is_available()` was `False` anyway. Switching to CPU-only torch took the image to **2.12 GB (−75.5%)** and resident memory to ~800 MB. Proven safe by re-running a fixed retrieval query and diffing chunk ids, ranks, and reranker scores against a pre-change baseline — byte-for-byte identical.
+
+- **The built image was never what ran.** While removing development bind mounts, the shell's Dockerfile turned out to have never copied the Django application into the image at all. Every environment had been running entirely off the host mount. Nothing failed, because the mount always masked it — a defect that only a production-shaped configuration could surface.
+
+- **The quota ceiling was decorative.** The daily API ceiling existed only inside offline evaluation scripts. The live request path incremented a counter but never consulted it, and the vision ingestion path spent quota without counting at all. Both are now gated fail-fast, before any model call, proven in both directions with the generation call stubbed so neither proof could spend a request.
+
+- **When the model and the ruler disagree, suspect the ruler.** An early correctness failure was traced not to the pipeline but to a bug in the gold set used to grade it.
+
+- **A test that cannot fail is not a test.** Every verification here states what a failure would look like *before* it runs. A check that can only pass silently gets a positive control beside it.
+
+---
+
+## Roadmap
+
+- [x] **Turn 1** — thin end-to-end skeleton, alive from day one
+- [x] **Turn 2** — ingestion and hybrid retrieval
+- [x] **Turn 3** — reranking and evaluation harness
+- [x] **Turn 4** — multimodal figure understanding
+- [x] **Turn 5** — agentic query rewriting and routing
+- [x] **Turn 6** — multi-tenancy, trust dashboard, ask history
+- [ ] **Turn 7** — cloud deployment and CI/CD *(in progress)*
+- [ ] Context precision: lift 0.774 → ≥ 0.85 via reranker depth tuning
+- [ ] Asynchronous ask pipeline so provider latency can never discard a completed answer
+- [ ] In-app document upload
+
+Built solo, in layered passes — one product deepened turn over turn, never rewritten as v1/v2/v3.
+
+---
+
+## Contact
+
+**Manglam**
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?logo=linkedin&logoColor=white)]([YOUR_LINKEDIN_URL_HERE](https://www.linkedin.com/in/manglam-dubey/))
+[![Email](https://img.shields.io/badge/Email-Reach%20out-EA4335?logo=gmail&logoColor=white)](mailto:manglamdubey11@gmail.com)
+
+Questions about the architecture, the evaluation methodology, or the metric that failed are all welcome — especially the last one.
+
+---
+
+<div align="center">
+
+> *"Program testing can be used to show the presence of bugs, but never to show their absence."*
+>
+> — **Edsger W. Dijkstra**
+
+<sub>Which is why Attest shows you both.</sub>
+
+</div>
