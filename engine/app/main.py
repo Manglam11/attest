@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from app.agent import run_agent
 from app.auth import TokenError, verify_token
+from app.quota import AGENT_DAILY_CEILING, remaining
 
 app = FastAPI(title="Attest Engine")
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +34,14 @@ def health():
 
 @app.post("/ask")
 def ask(request: AskRequest, owner_id: str = Depends(require_owner)):
+    if remaining(AGENT_DAILY_CEILING) <= 0:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Daily agent quota ({AGENT_DAILY_CEILING} calls) already "
+                "reached. Refusing before making any model call."
+            ),
+        )
     t0 = time.perf_counter()
     result = run_agent(request.question, owner_id)
     latency_s = round(time.perf_counter() - t0, 3)

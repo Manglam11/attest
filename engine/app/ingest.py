@@ -23,6 +23,8 @@ from qdrant_client.models import (
     MatchValue,
 )
 
+from app.quota import record_call
+
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
@@ -85,6 +87,7 @@ def extract_and_describe_figures(pdf_path: str) -> list[dict]:
             if pix.n > 4:
                 pix = fitz.Pixmap(fitz.csRGB, pix)
             png_bytes = pix.tobytes("png")
+            record_call()
             resp = client.models.generate_content(
                 model=VISION_MODEL,
                 contents=[

@@ -7,6 +7,7 @@ from langchain_core.callbacks import BaseCallbackHandler
 
 QUOTA_DIR = Path(os.getenv("QUOTA_DIR", "/code/data/quota"))
 QUOTA_PATH = QUOTA_DIR / "agent_calls.json"
+AGENT_DAILY_CEILING = int(os.environ.get("AGENT_DAILY_CEILING", "20"))
 
 
 def _today() -> str:

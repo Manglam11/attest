@@ -8,13 +8,12 @@ from pathlib import Path
 import httpx
 
 from app.eval.gold_set import GOLD_SET
-from app.quota import remaining, used_today
+from app.quota import AGENT_DAILY_CEILING, remaining, used_today
 
 ENGINE_URL = os.environ.get("ENGINE_URL", "http://engine:8000")
 OUTPUT_PATH = Path(os.environ.get("EVAL_DIR", "/code/data/eval")) / "latency_samples.json"
 TIMEOUT = 300.0
 PACE_SECONDS = float(os.environ.get("PACE_SECONDS", "30"))
-AGENT_DAILY_CEILING = int(os.environ.get("AGENT_DAILY_CEILING", "20"))
 MEASURED_WORST_CALLS_PER_ASK = 4
 
 ANSWERABLE = [item["question"] for item in GOLD_SET if item["answer_key"] != "UNANSWERABLE"]
